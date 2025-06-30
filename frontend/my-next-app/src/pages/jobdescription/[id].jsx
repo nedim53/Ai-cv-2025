@@ -21,21 +21,52 @@ export default function JobDescription() {
   const [parsedText, setParsedText] = useState("");
   const [aiResult, setAiResult] = useState("");
 
-  useEffect(() => {
+useEffect(() => {
+  if (!id) return;
+
+  const fetchJob = async () => {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (!error) setJob(data);
+    setLoading(false);
+  };
+
+  fetchJob();
+}, [id]);
+
+useEffect(() => {
+  const checkExistingAnalysis = async () => {
     if (!id) return;
-    const fetchJob = async () => {
-      const { data, error } = await supabase.from("jobs").select("*").eq("id", id).single();
-      if (!error) setJob(data);
-      setLoading(false);
-    };
-    fetchJob();
-  }, [id]);
+
+    const user = await supabase.auth.getUser();
+    const userId = user.data.user?.id;
+
+    const { data, error } = await supabase
+      .from("application_analysis")
+      .select("analysis")
+      .eq("user_id", userId)
+      .eq("job_id", id)
+      .maybeSingle();
+
+    if (data?.analysis) {
+      setAiResult(data.analysis);
+    }
+  };
+
+  checkExistingAnalysis();
+}, [id]);
+
 
   const handleUpload = async () => {
     if (!file || !job) return;
 
     const user = await supabase.auth.getUser();
     const userId = user.data.user?.id;
+
     const fileName = `${userId}/${Date.now()}_${file.name}`;
 
     const { error } = await supabase.storage
@@ -47,20 +78,28 @@ export default function JobDescription() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("job_description", job.description);
-    formData.append("job_id", job.id);
-    formData.append("user_id", userId);
+    const res = await fetch(
+      `http://localhost:8000/analyze-cv/${userId}/${job.id}`,
+      {
+        method: "POST",
+      }
+    );
 
-    const res = await fetch("http://localhost:8000/upload", {
-      method: "POST",
-      body: formData,
-    });
+    const data = await res.json();
+    const analysisId = data.analysis_id;
 
-    const result = await res.json();
-    setParsedText(result.parsed_text || "");
-    setAiResult(result.analysis || result.error || "Greška prilikom obrade.");
+    const interval = setInterval(async () => {
+      const check = await fetch(
+        `http://localhost:8000/get-analysis/${analysisId}`
+      );
+      const result = await check.json();
+
+      if (result.analysis) {
+        setAiResult(result.analysis);
+        setParsedText(result.parsed_text || "");
+        clearInterval(interval);
+      }
+    }, 10000);
   };
 
   if (loading || !job) {

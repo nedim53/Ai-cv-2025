@@ -4,10 +4,9 @@ from fastapi.responses import JSONResponse
 from docx import Document
 import pdfplumber
 from io import BytesIO
-from app.call_ollama import analyze_With_ollama
 import pytesseract
+from app.gemini import router as gemini_router
 from pathlib import Path
-from app.request_service import router as analyze_router
 from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
@@ -25,8 +24,6 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 app = FastAPI()
 
-
-
 # CORS za frontend
 app.add_middleware(
     CORSMiddleware,
@@ -39,13 +36,13 @@ app.add_middleware(
 @app.get("/applications/by_hr/{hr_id}")
 def get_applications_by_hr(hr_id: str):
     response = supabase.from_("application_analysis").select(
-        "*, jobs(*), user(*)"
+        "*, jobs(*), users(*)"
     ).eq("jobs.hr_id", hr_id).execute()
     return response.data
 
-
 @app.get("/")
 def root():
-    return {"message": "AI Resume Analyzer backend (LLaMA) is running."}
+    return {"message": "AI Resume Analyzer backend (Gemini) is running."}
 
-app.include_router(analyze_router)
+# Ukucane rute
+app.include_router(gemini_router)

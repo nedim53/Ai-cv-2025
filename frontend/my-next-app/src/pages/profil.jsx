@@ -28,25 +28,45 @@ export default function Profil() {
   }, [user]);
 
   const handleCvUpload = async () => {
-    if (!cvFile || !user) return;
-    const fileName = `${user.id}/cv_${Date.now()}_${cvFile.name}`;
+  if (!cvFile) return;
 
-    const { error } = await supabase.storage
-      .from("user-uploads")
-      .upload(fileName, cvFile, { upsert: true });
+  const session = await supabase.auth.getSession();
+  const uid = session.data.session.user.id;
 
-    if (error) {
-      alert("Greška pri uploada: " + error.message);
-    } else {
-      alert("CV uspješno postavljen.");
-    }
+  const fileName = `${uid}/cv_${Date.now()}_${cvFile.name}`;
 
-    const publicUrl = supabase.storage
-      .from("user-uploads")
-      .getPublicUrl(fileName).data.publicUrl;
+  const { error } = await supabase.storage
+    .from("user-uploads")
+    .upload(fileName, cvFile, { upsert: true });
 
-    await supabase.from("user").update({ cv_url: publicUrl }).eq("id", user.id);
-  };
+  if (error) {
+    alert("Greška pri uploada: " + error.message);
+    return;
+  }
+
+  const {data: signedData, error: signedError} = await supabase.storage
+    .from("user-uploads")
+    .createSignedUrl(fileName,60*60);
+
+     if (signedError) {
+    alert("Greška pri kreiranju linka: " + signedError.message);
+    return;
+  }
+
+  const signedUrl = signedData?.signedUrl;
+
+ const { error: dbError } = await supabase
+    .from("users")
+    .update({ cv_url: signedUrl })
+    .eq("id", uid);
+
+  if (dbError) {
+    alert("Greška pri ažuriranju URL-a: " + dbError.message);
+  } else {
+    alert("CV uspješno uploadovan.");
+  }
+ 
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +80,7 @@ export default function Profil() {
     const { name, surname, telephone } = formData;
 
     const { error } = await supabase
-      .from("user")
+      .from("users")
       .update({ name, surname, telephone })
       .eq("id", user.id);
 
@@ -96,11 +116,20 @@ export default function Profil() {
               border: "1px solid #ff1a1a",
             }}
           >
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
               <Avatar sx={{ bgcolor: "#ff1a1a", width: 90, height: 90, mb: 2 }}>
                 <AccountCircle sx={{ fontSize: 60 }} />
               </Avatar>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "#ff1a1a", mb: 3 }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "#ff1a1a", mb: 3 }}
+              >
                 Moj profil
               </Typography>
             </Box>
@@ -141,7 +170,7 @@ export default function Profil() {
             <ProfileItem label="Uloga" value={user.role} />
             <ProfileItem label="Korisnički ID" value={user.id} />
 
-            <Paper
+           {user.role === "user" && ( <Paper
               elevation={2}
               sx={{
                 mt: 5,
@@ -167,6 +196,11 @@ export default function Profil() {
                   color: "#fff",
                 }}
               />
+              {cvFile && (
+                <Typography variant="body2" sx={{ color: "#00e6b8", mb: 2 }}>
+                  📎 Odabrani fajl: {cvFile.name}
+                </Typography>
+              )}
 
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                 <Button
@@ -197,19 +231,33 @@ export default function Profil() {
                 )}
               </Box>
             </Paper>
-
-            <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
+           )}
+            <Box
+              sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}
+            >
               {editMode ? (
                 <>
-                  <Button variant="contained" color="success" onClick={handleSave}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleSave}
+                  >
                     ✅ Spasi promjene
                   </Button>
-                  <Button variant="outlined" color="inherit" onClick={() => setEditMode(false)}>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    onClick={() => setEditMode(false)}
+                  >
                     ✖ Otkaži
                   </Button>
                 </>
               ) : (
-                <Button variant="contained" color="error" onClick={() => setEditMode(true)}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => setEditMode(true)}
+                >
                   ✏️ Ažuriraj podatke
                 </Button>
               )}

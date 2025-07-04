@@ -34,12 +34,6 @@ export default function Register() {
     email,
     password,
     options: {
-      data: {
-        name: form.ime.value,
-        surname: form.prezime.value,
-        role,
-        telephone: form.telefon.value,
-      },
     },
   });
 
@@ -58,7 +52,7 @@ export default function Register() {
       telephone: form.telefon.value,
     };
 
-    const { error: insertError } = await supabase.from("user").insert([userData]);
+    const { error: insertError } = await supabase.from("users").insert([userData]);
 
     if (insertError) {
       alert("Greška prilikom unosa u bazu: " + insertError.message);

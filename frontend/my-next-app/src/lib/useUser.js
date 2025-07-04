@@ -17,8 +17,8 @@ export default function useUser() {
       } = await supabase.auth.getUser();
 
       const { data: userData } = await supabase
-        .from("user")
-        .select("name, surname, role")
+        .from("users")
+        .select("name, surname, role,cv_url")
         .eq("id", authUser.id)
         .single();
 

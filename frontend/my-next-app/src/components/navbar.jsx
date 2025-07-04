@@ -35,7 +35,7 @@ export default function Navbar() {
       </Typography>
 
       <Stack direction="row" spacing={3}>
-        <Link href="/parse" passHref>
+        <Link href="/" passHref>
           <Button
             sx={{
               color: "#fff",
@@ -46,7 +46,7 @@ export default function Navbar() {
               },
             }}
           >
-            Parsiraj
+            Home
           </Button>
         </Link>
         <Link href="/profil" passHref>

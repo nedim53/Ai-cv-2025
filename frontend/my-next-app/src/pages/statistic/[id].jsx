@@ -6,6 +6,7 @@ import {
   CircularProgress,
   Paper,
   Chip,
+  Button,
   Divider,
   Link as MuiLink,
 } from "@mui/material";
@@ -19,6 +20,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [sortBy, setSortBy] = useState("latest");
 
   useEffect(() => {
     if (!router.isReady || !id) return;
@@ -48,7 +50,7 @@ export default function JobDetailPage() {
       const enrichedApps = await Promise.all(
         (appData || []).map(async (app) => {
           const { data: userData } = await supabase
-            .from("user")
+            .from("users")
             .select("name, surname, email, telephone, cv_url")
             .eq("id", app.user_id)
             .maybeSingle();
@@ -66,6 +68,33 @@ export default function JobDetailPage() {
 
     fetchData();
   }, [id, router]);
+
+  const handleCVDownload = async (url) => {
+    const user = await supabase.auth.getUser();
+    const userId = user.data.user?.id;
+
+    if (!userId) {
+      alert("Pristup je odbijen");
+      return;
+    }
+    try {
+      const path = url.split("/storage/v1/object/public/")[1];
+
+      const { data, error } = await supabase.storage
+        .from("user-uploads")
+        .createSignedUrl(path.replace("user-uploads/", ""), 60); //ovde mogu da pomjerim koliko ce vaziti
+
+      if (error || !data?.signedUrl) {
+        alert("Greška pri generisanju linka.");
+        return;
+      }
+
+      window.open(data.signedUrl, "_blank");
+    } catch (err) {
+      console.error(err);
+      alert("Greska u pristupu");
+    }
+  };
 
   if (loading) {
     return (
@@ -90,7 +119,10 @@ export default function JobDetailPage() {
       <Navbar />
 
       <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
-        <Typography variant="h4" sx={{ color: "#ff1a1a", fontWeight: "bold", mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{ color: "#ff1a1a", fontWeight: "bold", mb: 3 }}
+        >
           📄 Detalji konkursa
         </Typography>
 
@@ -117,65 +149,109 @@ export default function JobDetailPage() {
           <GridField label="Kontakt Telefon" value={job.telephone} />
           <GridField
             label="Potrebno"
-            value={`CV: ${job.cv ? "Da" : "Ne"}, Iskustvo: ${job.experience ? "Da" : "Ne"}`}
+            value={`CV: ${job.cv ? "Da" : "Ne"}, Iskustvo: ${
+              job.experience ? "Da" : "Ne"
+            }`}
           />
         </Paper>
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+          <select
+            onChange={(el) => setSortBy(el.target.value)}
+            style={{
+              padding: "8px",
+              backgroundColor: "#1e1e1e",
+              color: "#fff",
+              border: "1px solid #ff1a1a",
+              borderRadius: "4px",
+            }}
+          >
+            <option value="latest">🕒 Najnovije</option>
+            <option value="oldest">🕒 Najstarije</option>
+            <option value="score_desc">🔼 Ocjena: Najviša</option>
+            <option value="score_asc">🔽 Ocjena: Najniža</option>
+          </select>
+        </Box>
 
         <Typography variant="h5" sx={{ mb: 2, color: "#ff1a1a" }}>
           📝 Prijave kandidata
         </Typography>
 
         {applications.length === 0 ? (
-          <Typography sx={{ color: "#aaa" }}>Nema prijava za ovaj konkurs.</Typography>
+          <Typography sx={{ color: "#aaa" }}>
+            Nema prijava za ovaj konkurs.
+          </Typography>
         ) : (
-          applications.map((app, idx) => (
-            <Paper
-              key={idx}
-              elevation={2}
-              sx={{
-                mb: 3,
-                p: 3,
-                borderRadius: 2,
-                bgcolor: "#1e1e1e",
-                borderLeft: "5px solid #ff4d4d",
-              }}
-            >
-              <Typography variant="subtitle1" sx={{ color: "#ffcccc", mb: 1 }}>
-                👤 {app.user.name} {app.user.surname}
-              </Typography>
-              <Typography sx={{ color: "#bbb" }}>Email: {app.user.email}</Typography>
-              <Typography sx={{ color: "#bbb" }}>Telefon: {app.user.telephone}</Typography>
-              {app.user.cv_url && (
-                <Typography sx={{ color: "#bbb", mt: 1 }}>
-                  CV:{" "}
-                  <MuiLink
-                    href={app.user.cv_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    underline="hover"
-                    sx={{ color: "#ff4d4d" }}
-                  >
-                    Otvori
-                  </MuiLink>
+          [...applications]
+            .sort((a, b) => {
+              switch (sortBy) {
+                case "score_desc":
+                  return b.score - a.score;
+                case "score_asc":
+                  return a.score - b.score;
+                case "oldest":
+                  return new Date(a.created_at) - new Date(b.created_at);
+                case "latest":
+                default:
+                  return new Date(b.created_at) - new Date(a.created_at);
+              }
+            })
+            .map((app, idx) => (
+              <Paper
+                key={idx}
+                elevation={2}
+                sx={{
+                  mb: 3,
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: "#1e1e1e",
+                  borderLeft: "5px solid #ff4d4d",
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  sx={{ color: "#ffcccc", mb: 1 }}
+                >
+                  👤 {app.user.name} {app.user.surname}
                 </Typography>
-              )}
+                <Typography sx={{ color: "#bbb" }}>
+                  Email: {app.user.email}
+                </Typography>
+                <Typography sx={{ color: "#bbb" }}>
+                  Telefon: {app.user.telephone}
+                </Typography>
+                {app.user.cv_url && (
+                  <Typography sx={{ color: "#bbb", mt: 1 }}>
+                    <Button
+                      onClick={() => handleCVDownload(app.user.cv_url)}
+                      underline="hover"
+                      sx={{ color: "#ff4d4d" }}
+                    >
+                      {" "}
+                      Preuzmi CV
+                    </Button>
+                  </Typography>
+                )}
 
-              <Chip
-                label={`Ocjena: ${app.score}`}
-                sx={{ bgcolor: "#ff1a1a", color: "#fff", mt: 2 }}
-              />
+                <Chip
+                  label={`Ocjena: ${app.score}`}
+                  sx={{ bgcolor: "#ff1a1a", color: "#fff", mt: 2 }}
+                />
 
-              <Divider sx={{ my: 2, borderColor: "#333" }} />
+                <Divider sx={{ my: 2, borderColor: "#333" }} />
 
-              <Typography variant="body2" sx={{ color: "#ccc" }}>
-                {app.analysis}
-              </Typography>
+                <Typography variant="body2" sx={{ color: "#ccc" }}>
+                  {app.analysis}
+                </Typography>
 
-              <Typography variant="caption" sx={{ color: "#888", mt: 1, display: "block" }}>
-                🕒 Prijavljeno: {new Date(app.created_at).toLocaleString()}
-              </Typography>
-            </Paper>
-          ))
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#888", mt: 1, display: "block" }}
+                >
+                  🕒 Prijavljeno: {new Date(app.created_at).toLocaleString()}
+                </Typography>
+              </Paper>
+            ))
         )}
       </Box>
     </Box>

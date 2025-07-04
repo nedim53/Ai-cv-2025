@@ -29,6 +29,8 @@ export default function Statistic() {
     severity: "success",
   });
 
+    const [sortBy, setSortBy] = useState("latest");
+  
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editJob, setEditJob] = useState({
     id: null,
@@ -150,10 +152,11 @@ export default function Statistic() {
       } = await supabase.auth.getUser();
 
       const { data: userData } = await supabase
-        .from("user")
+        .from("users")
         .select("*")
         .eq("id", authUser.id)
         .maybeSingle();
+        
 
       const fullUser = { ...authUser, ...userData };
       setUser(fullUser);
@@ -172,19 +175,27 @@ export default function Statistic() {
               .eq("job_id", job.id);
 
             const enriched = await Promise.all(
-              (applications || []).map(async (app) => {
-                const { data: u } = await supabase
-                  .from("user")
-                  .select("name, surname")
-                  .eq("id", app.user_id)
-                  .maybeSingle();
+  (applications || []).map(async (app) => {
+    const { data: u } = await supabase
+      .from("users")
+      .select("name, surname, cv_url")
+      .eq("id", app.user_id)
+      .maybeSingle();
 
-                return {
-                  ...app,
-                  user: u || { name: "Nepoznat", surname: "" },
-                };
-              })
-            );
+       if(!u){
+      console.log("nije nadjen ??", app.user_id)
+    }
+    return {
+      ...app,
+      user: {
+        name: u?.name || "Nepoznat",
+        surname: u?.surname || "",
+        cv_url: u?.cv_url || null,
+      },
+    };
+   
+  })
+);
 
             return {
               ...job,
@@ -235,6 +246,33 @@ export default function Statistic() {
         >
           📊 Statistika prijava
         </Typography>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value)}
+      style={{
+        padding: "8px",
+        backgroundColor: "#1e1e1e",
+        color: "#fff",
+        border: "1px solid #ff1a1a",
+        borderRadius: "4px",
+      }}
+    >
+      {user?.role === "hr" ?(
+        <>
+        <option value="latest">🕒 Najnovije</option>
+        <option value="oldest">🕒 Najstarije</option>
+        </>
+      ):(
+        <>
+      <option value="latest">🕒 Najnovije</option>
+      <option value="oldest">🕒 Najstarije</option>
+      <option value="score_desc">🔼 Ocjena: Najviša</option>
+      <option value="score_asc">🔽 Ocjena: Najniža</option>
+        </>
+    )}
+    </select>
+  </Box>
 
         {loading ? (
           <CircularProgress sx={{ color: "#ff1a1a" }} />
@@ -246,7 +284,18 @@ export default function Statistic() {
               Nemaš objavljenih konkursa.
             </Typography>
           ) : (
-            jobStats.map((job, index) => (
+            [...jobStats]
+  .sort((a, b) => {
+    switch (sortBy) {
+      case "oldest":
+        return new Date(a.created_at) - new Date(b.created_at);
+      case "latest":
+      default:
+        return new Date(b.created_at) - new Date(a.created_at);
+    }
+  })
+  .map((job, index) => (
+
               <Paper
                 key={index}
                 elevation={3}
@@ -290,9 +339,7 @@ export default function Statistic() {
                         sx={{ bgcolor: "#ff1a1a", color: "#fff" }}
                       />
                     </Box>
-                    <Typography variant="body2" sx={{ mt: 1, color: "#ccc" }}>
-                      {app.analysis}
-                    </Typography>
+                   
                     <Typography
                       variant="caption"
                       sx={{ color: "#888", mt: 1, display: "block" }}
@@ -330,7 +377,22 @@ export default function Statistic() {
         ) : jobStats.length === 0 ? (
           <Typography sx={{ color: "#ccc" }}>Nemaš prijava.</Typography>
         ) : (
-          jobStats.map((app, idx) => (
+          [...jobStats]
+  .sort((a, b) => {
+    switch (sortBy) {
+      case "score_desc":
+        return b.score - a.score;
+      case "score_asc":
+        return a.score - b.score;
+      case "oldest":
+        return new Date(a.created_at) - new Date(b.created_at);
+      case "latest":
+      default:
+        return new Date(b.created_at) - new Date(a.created_at);
+    }
+  })
+  .map((app, idx) => (
+
             <Paper
               key={idx}
               elevation={2}
@@ -354,11 +416,12 @@ export default function Statistic() {
               </Typography>
               <Chip
                 label={`Ocjena: ${app.score}`}
-                sx={{ bgcolor: "#ff1a1a", color: "#fff", mb: 2 }}
+                sx={{ bgcolor: "white", color: "black", mb: 2 }}
               />
-              <Typography variant="body2" sx={{ color: "#ccc" }}>
-                {app.analysis}
+              <Typography sx={{ color: "#ccc", mb: 1 }}>
+                AI ANALIZA:  {app.analysis}
               </Typography>
+            
               <Typography
                 variant="caption"
                 sx={{ color: "#888", mt: 1, display: "block" }}

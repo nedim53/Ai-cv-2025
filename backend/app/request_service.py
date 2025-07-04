@@ -5,6 +5,7 @@ from app.call_ollama import analyze_With_ollama
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pathlib import Path
+#from app.gemini import analyze_with_gemini
 import os
 
 env_path = Path(__file__).parent / ".env"
@@ -48,11 +49,22 @@ def run_analysis_task(analysis_id: str):
     text = "Ovde ide parsirani tekst iz storage-a"  # Placeholder za stvarni sadržaj CV-a
 
     prompt = (
-        f"Opis posla: {job_description}\n\n"
-        "Analiziraj CV kandidata. Na skali od 1 do 10, zaokruzi na jednoj decimali "
-        "dodijeli ocjenu prikladnosti za ovaj posao kao broj  "
-        "i objasni zašto. Prvo napiši ocjenu, zatim analizu, sve piši na bosanskom jeziku."
+    f"Opis posla:\n{job_description}\n\n"
+    "Sada slijedi analiza životopisa kandidata u odnosu na opis posla.\n\n"
+    "🔹 Na prvoj liniji **OBAVEZNO** napiši samo brojčanu ocjenu prikladnosti kandidata (npr. `7.5`).\n"
+    "🔹 Koristi decimalnu vrijednost sa jednom decimalom (obavezno).\n"
+    "🔹 Nakon toga, napiši **detaljnu analizu** zašto si dodijelio tu ocjenu.\n"
+    "🔹 Analiziraj kompetencije, iskustvo, edukaciju i kompatibilnost sa opisom posla.\n"
+    "🔹 Navedi koje su prednosti i nedostaci kandidata u odnosu na opisani posao.\n"
+    "🔹 Piši isključivo na bosanskom jeziku.\n"
+    "🔹 Format odgovora:\n"
+    "```\n"
+    "8.3\n"
+    "Kandidat ima bogato iskustvo u XYZ. Posebno se ističe u...\n"
+    "...\n"
+    "```"
     )
+
 
     analysis_result = analyze_With_ollama(text, prompt)
 
@@ -65,9 +77,25 @@ def run_analysis_task(analysis_id: str):
         "score": score
     }).eq("id", analysis_id).execute()
 
-@router.get("/get-analysis/{analysis_id}")
-def get_analysis(analysis_id: str):
-    result = supabase.table("application_analysis").select("analysis, score").eq("id", analysis_id).execute()
-    if not result.data:
-        return {"error": "Ne postoji zapis."}
-    return result.data[0]
+
+#@router.get("/get-analysis/{analysis_id}")
+#def get_analysis(analysis_id: str):
+ #   result = supabase.table("application_analysis").select("analysis, score").eq("id", analysis_id).execute()
+  #  if not result.data:
+   #     return {"error": "Ne postoji zapis."}
+   # return result.data[0]
+
+
+#@router.get("/get-analysis/{analysis_id}")
+#ef get_analysis(analysis_id: str):
+ #   result = supabase.table("application_analysis").select("cv_text, job_description").eq("id", analysis_id).execute()
+
+  #  if not result.data:
+   #     return {"error": "Ne postoji zapis."}
+
+    #cv_text = result.data[0]["cv_text"]
+  #  job_description = result.data[0]["job_description"]
+#
+ #   ai_result = analyze_with_gemini(cv_text, job_description)
+
+   # return {"result": ai_result}

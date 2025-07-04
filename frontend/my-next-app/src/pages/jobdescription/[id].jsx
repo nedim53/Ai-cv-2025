@@ -18,89 +18,88 @@ export default function JobDescription() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
-  const [parsedText, setParsedText] = useState("");
   const [aiResult, setAiResult] = useState("");
 
-useEffect(() => {
-  if (!id) return;
-
-  const fetchJob = async () => {
-    const { data, error } = await supabase
-      .from("jobs")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (!error) setJob(data);
-    setLoading(false);
-  };
-
-  fetchJob();
-}, [id]);
-
-useEffect(() => {
-  const checkExistingAnalysis = async () => {
+  useEffect(() => {
     if (!id) return;
 
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id;
+    const fetchJob = async () => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-    const { data, error } = await supabase
-      .from("application_analysis")
-      .select("analysis")
-      .eq("user_id", userId)
-      .eq("job_id", id)
-      .maybeSingle();
+      if (!error) setJob(data);
+      setLoading(false);
+    };
 
-    if (data?.analysis) {
-      setAiResult(data.analysis);
-    }
-  };
+    fetchJob();
+  }, [id]);
 
-  checkExistingAnalysis();
-}, [id]);
+  useEffect(() => {
+    const fetchExistingAnalysis = async () => {
+      if (!id) return;
 
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      if (!userId) return;
+
+      const res = await fetch(
+        `http://localhost:8000/get-existing-analysis/${userId}/${id}`
+      );
+      const result = await res.json();
+
+      if (result?.analysis) {
+        setAiResult(result.analysis);
+      }
+    };
+
+    fetchExistingAnalysis();
+  }, [id]);
 
   const handleUpload = async () => {
-    if (!file || !job) return;
+  if (!file || !job) return;
 
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id;
+  const user = await supabase.auth.getUser();
+  const userId = user.data.user?.id;
+  if (!userId) return;
 
-    const fileName = `${userId}/${Date.now()}_${file.name}`;
+  const formData = new FormData();
+  formData.append("user_id", userId);
+  formData.append("file", file);
 
-    const { error } = await supabase.storage
-      .from("user-uploads")
-      .upload(fileName, file);
+  const uploadRes = await fetch("http://localhost:8000/upload-cv", {
+    method: "POST",
+    body: formData,
+  });
 
-    if (error) {
-      alert("Greška prilikom uploada: " + error.message);
-      return;
-    }
+  if (!uploadRes.ok) {
+    alert("Upload fajla nije uspio");
+    return;
+  }
 
-    const res = await fetch(
-      `http://localhost:8000/analyze-cv/${userId}/${job.id}`,
-      {
-        method: "POST",
-      }
+  const res = await fetch(
+    `http://localhost:8000/analyze-cv/${userId}/${job.id}`,
+    { method: "POST" }
+  );
+
+  const data = await res.json();
+  const analysisId = data.analysis_id;
+
+  const interval = setInterval(async () => {
+    const check = await fetch(
+      `http://localhost:8000/get-analysis/${analysisId}`
     );
+    const result = await check.json();
 
-    const data = await res.json();
-    const analysisId = data.analysis_id;
+    if (result.analysis) {
+      setAiResult(result.analysis);
+      clearInterval(interval);
+    }
+  }, 10000);
+};
 
-    const interval = setInterval(async () => {
-      const check = await fetch(
-        `http://localhost:8000/get-analysis/${analysisId}`
-      );
-      const result = await check.json();
-
-      if (result.analysis) {
-        setAiResult(result.analysis);
-        setParsedText(result.parsed_text || "");
-        clearInterval(interval);
-      }
-    }, 10000);
-  };
 
   if (loading || !job) {
     return (
@@ -163,7 +162,7 @@ useEffect(() => {
           </Typography>
         </Paper>
 
-        {/* Upload sekcija */}
+        {/* Upload sekcija//////////////////// */}
         <Paper
           elevation={3}
           sx={{
@@ -211,25 +210,7 @@ useEffect(() => {
             🚀 Pošalji i analiziraj
           </Button>
 
-          {parsedText && (
-            <>
-              <Typography variant="h6" sx={{ mb: 1, color: "#ff4d4d" }}>
-                ✅ Parsiran tekst:
-              </Typography>
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 4,
-                  bgcolor: "#2a2a2a",
-                  borderRadius: 2,
-                  whiteSpace: "pre-wrap",
-                  color: "#ddd",
-                }}
-              >
-                {parsedText}
-              </Paper>
-            </>
-          )}
+
 
           {aiResult && (
             <>

@@ -177,3 +177,62 @@ def build_prompt(job_description: str, cv_text: str) -> str:
         "...\n"
         "```"
     )
+
+# testiranje find my job opcije hehe
+@router.get("/find-my-jobs/{user_id}")
+def find_my_jobs(user_id: str):
+    import json
+
+    file_path_pdf = f"temp_uploads/{user_id}.pdf"
+    file_path_img = f"temp_uploads/{user_id}.png"
+    cv_text = ""
+
+    if os.path.exists(file_path_pdf):
+        cv_text = parse_pdf(file_path_pdf)
+    elif os.path.exists(file_path_img):
+        cv_text = parse_image(file_path_img)
+    else:
+        raise HTTPException(status_code=404, detail="CV nije pronađen")
+
+    if not cv_text.strip():
+        raise HTTPException(status_code=400, detail="CV je prazan")
+
+    prompt = f"""
+    📄 Tekst CV-a:
+    {cv_text}
+
+    Izdvoji samo one ključne riječi koje se eksplicitno pojavljuju u tekstu CV-a — nemoj izmišljati dodatne podatke.
+
+ Vrati samo one izraze, tehnologije, alate ili pozicije koje su *tačno spomenute* u tekstu. Bez pretpostavki.
+
+Vrati rezultat kao Python listu stringova, npr:
+["node.js", "react", "html", "css", "postgresql", "fastapi", "git"]
+"""
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(prompt)
+    keywords_raw = response.text.strip()
+
+    try:
+        keywords = json.loads(keywords_raw)
+    except:
+        keywords = [kw.strip().lower() for kw in re.findall(r'\w+', keywords_raw)]
+
+    if not keywords:
+        raise HTTPException(status_code=400, detail="Nema pronađenih ključnih riječi")
+
+    # 3. Dohvati sve poslove iz baze
+    jobs_response = supabase.table("jobs").select("*").execute()
+    jobs = jobs_response.data if jobs_response.data else []
+
+    # 4. Rangiraj po broju poklapanja ključnih riječi
+    def match_score(job):
+        combined_text = f"{job['title']} {job['description']}".lower()
+        return sum(1 for kw in keywords if kw.lower() in combined_text)
+
+    ranked_jobs = sorted(jobs, key=match_score, reverse=True)
+
+    return {
+        "keywords": keywords,
+        "results": ranked_jobs[:10]  # po zelji koliko poslova da trazim
+    }

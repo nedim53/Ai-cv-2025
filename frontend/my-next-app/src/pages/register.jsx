@@ -34,6 +34,7 @@ export default function Register() {
     email,
     password,
     options: {
+      
     },
   });
 
@@ -42,25 +43,28 @@ export default function Register() {
     return;
   }
 
+  
   if (data && data.user) {
-    const userData = {
-      id: data.user.id,
-      name: form.ime.value,
-      surname: form.prezime.value,
-      email,
-      role,
-      telephone: form.telefon.value,
-    };
+const userData = {
+  auth_id: data.user.id,
+  name: form.ime.value,
+  surname: form.prezime.value,
+  email,
+  role,
+  telephone: form.telefon.value,
+};
 
-    const { error: insertError } = await supabase.from("users").insert([userData]);
+  const { error: insertError } = await supabase.from("users").insert([userData]);
 
-    if (insertError) {
-      alert("Greška prilikom unosa u bazu: " + insertError.message);
-    } else {
-      alert("Uspješna registracija! Provjerite email.");
-      router.push("/login");
-    }
+  if (insertError) {
+    alert("Greška prilikom unosa u bazu: " + insertError.message);
+    return;
   }
+
+  alert("Uspješna registracija! Provjerite email i nakon potvrde se ulogujte.");
+  router.push("/login");
+}
+
 };
 
 

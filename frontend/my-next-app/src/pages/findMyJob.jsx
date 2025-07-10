@@ -8,6 +8,8 @@ export default function FindMyJob() {
   const [jobs, setJobs] = useState([]);
   const [keywords, setKeywords] = useState([]);
   const [fetching, setFetching] = useState(false);
+  const [category, setCategory] = useState("");
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
   const fetchRecommendedJobs = async () => {
     if (!user?.id) return;
@@ -15,11 +17,14 @@ export default function FindMyJob() {
     setFetching(true);
 
     try {
-      const res = await fetch(`http://localhost:8000/find-my-jobs/${user.id}`);
+      const res = await fetch(`${API_BASE}/find-my-jobs/${user.id}`);
       const data = await res.json();
 
       setJobs(data.results || []);
       setKeywords(data.keywords || []);
+
+      setCategory(data.category || "");
+
     } catch (err) {
       console.error("Greška:", err);
     } finally {
@@ -42,6 +47,10 @@ export default function FindMyJob() {
           🔎 Preporučeni poslovi za tebe
         </Typography>
 
+         <Typography variant="h4" sx={{ mb: 3, color: "#ff1a1a" }}>
+          Detektovana kategorija: {category}
+        </Typography>
+
         {fetching ? (
           <CircularProgress sx={{ color: "#ff1a1a" }} />
         ) : jobs.length === 0 ? (
@@ -51,7 +60,7 @@ export default function FindMyJob() {
         ) : (
           <>
             <Typography sx={{ mb: 2, color: "#999" }}>
-              🧠 Ključne riječi iz tvog CV-a: {keywords.join(", ")}
+               Ključne riječi iz tvog CV-a: {keywords.join(", ")}
             </Typography>
 
             {jobs.map((job) => (

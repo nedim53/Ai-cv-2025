@@ -69,32 +69,25 @@ export default function JobDetailPage() {
     fetchData();
   }, [id, router]);
 
-  const handleCVDownload = async (url) => {
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id;
+ const handleCVDownload = async (cvPath) => {
+  const { data, error } = await supabase.storage
+    .from("user-uploads")
+    .download(cvPath); 
 
-    if (!userId) {
-      alert("Pristup je odbijen");
-      return;
-    }
-    try {
-      const path = url.split("/storage/v1/object/public/")[1];
+  if (error || !data) {
+    console.error("Greška pri downloadu:", error);
+    alert("Greška pri preuzimanju CV-a.");
+    return;
+  }
 
-      const { data, error } = await supabase.storage
-        .from("user-uploads")
-        .createSignedUrl(path.replace("user-uploads/", ""), 60); //ovde mogu da pomjerim koliko ce vaziti
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = cvPath.split("/").pop(); 
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
-      if (error || !data?.signedUrl) {
-        alert("Greška pri generisanju linka.");
-        return;
-      }
-
-      window.open(data.signedUrl, "_blank");
-    } catch (err) {
-      console.error(err);
-      alert("Greska u pristupu");
-    }
-  };
 
   if (loading) {
     return (

@@ -10,16 +10,17 @@ import {
   CircularProgress,
 } from "@mui/material";
 import Navbar from "@/components/navbar";
+import useUser from "@/lib/useUser";
+
 
 export default function JobDescription() {
   const router = useRouter();
   const { id } = router.query;
-
+  const { user, loading: userLoading } = useUser();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [file, setFile] = useState(null);
   const [aiResult, setAiResult] = useState("");
-
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
   useEffect(() => {
     if (!id) return;
 
@@ -38,49 +39,30 @@ export default function JobDescription() {
   }, [id]);
 
   useEffect(() => {
-    const fetchExistingAnalysis = async () => {
-      if (!id) return;
+      const fetchExistingAnalysis = async () => {
+    if (!id || !user) return;
 
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
-      if (!userId) return;
+    const res = await fetch(
+      `${API_BASE}/get-existing-analysis/${user.id}/${id}`
+    );
 
-      const res = await fetch(
-        `http://localhost:8000/get-existing-analysis/${userId}/${id}`
-      );
-      const result = await res.json();
+    const result = await res.json();
+    if (result?.analysis) {
+      setAiResult(result.analysis);
+    } else {
+      setAiResult("");
+    }
+  };
 
-      if (result?.analysis) {
-        setAiResult(result.analysis);
-      }
-    };
+  fetchExistingAnalysis();
+}, [id, user]);
 
-    fetchExistingAnalysis();
-  }, [id]);
 
-  const handleUpload = async () => {
-  if (!file || !job) return;
-
-  const user = await supabase.auth.getUser();
-  const userId = user.data.user?.id;
-  if (!userId) return;
-
-  const formData = new FormData();
-  formData.append("user_id", userId);
-  formData.append("file", file);
-
-  const uploadRes = await fetch("http://localhost:8000/upload-cv", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!uploadRes.ok) {
-    alert("Upload fajla nije uspio");
-    return;
-  }
+const handleAnalyze = async () => {
+  if (!user || !job) return;
 
   const res = await fetch(
-    `http://localhost:8000/analyze-cv/${userId}/${job.id}`,
+    `${API_BASE}/analyze-cv/${user.id}/${job.id}`,
     { method: "POST" }
   );
 
@@ -89,7 +71,7 @@ export default function JobDescription() {
 
   const interval = setInterval(async () => {
     const check = await fetch(
-      `http://localhost:8000/get-analysis/${analysisId}`
+      `${API_BASE}/get-analysis/${analysisId}`
     );
     const result = await check.json();
 
@@ -99,6 +81,8 @@ export default function JobDescription() {
     }
   }, 10000);
 };
+
+
 
 
   if (loading || !job) {
@@ -162,7 +146,7 @@ export default function JobDescription() {
           </Typography>
         </Paper>
 
-        {/* Upload sekcija//////////////////// */}
+        {/* Upload section */}
         <Paper
           elevation={3}
           sx={{
@@ -179,23 +163,11 @@ export default function JobDescription() {
           <Typography variant="h6" sx={{ mb: 2, color: "#ff4d4d" }}>
             📎 Pošalji svoj CV za AI analizu
           </Typography>
-          <Input
-            type="file"
-            fullWidth
-            inputProps={{ accept: ".pdf,.docx" }}
-            onChange={(e) => setFile(e.target.files[0])}
-            disableUnderline
-            sx={{
-              mb: 3,
-              bgcolor: "#2a2a2a",
-              p: 1.5,
-              borderRadius: 1,
-              color: "#fff",
-            }}
-          />
+          
+
           <Button
             variant="contained"
-            onClick={handleUpload}
+            onClick={handleAnalyze}
             sx={{
               bgcolor: "#e50914",
               ":hover": { bgcolor: "#b0060f" },

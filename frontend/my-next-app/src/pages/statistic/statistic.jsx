@@ -18,9 +18,12 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
+import useUser from "@/lib/useUser";
 
 export default function Statistic() {
-  const [user, setUser] = useState(null);
+  const { user, loading: userLoading } = useUser();
+  const [realUserId, setRealUserId] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [jobStats, setJobStats] = useState([]);
   const [snackbar, setSnackbar] = useState({
@@ -28,9 +31,7 @@ export default function Statistic() {
     message: "",
     severity: "success",
   });
-
-    const [sortBy, setSortBy] = useState("latest");
-  
+  const [sortBy, setSortBy] = useState("latest");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editJob, setEditJob] = useState({
     id: null,
@@ -91,21 +92,13 @@ export default function Statistic() {
         experience,
       })
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", realUserId || user.id);
 
     if (error) {
       console.error("UPDATE ERROR:", error);
-      setSnackbar({
-        open: true,
-        message: "Greška pri uređivanju.",
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: "Greška pri uređivanju.", severity: "error" });
     } else {
-      setSnackbar({
-        open: true,
-        message: "Uspješno uređeno!",
-        severity: "success",
-      });
+      setSnackbar({ open: true, message: "Uspješno uređeno!", severity: "success" });
       setEditDialogOpen(false);
       location.reload();
     }
@@ -119,53 +112,51 @@ export default function Statistic() {
       .from("jobs")
       .delete()
       .eq("id", jobId)
-      .eq("user_id", user.id);
+      .eq("user_id", realUserId || user.id);
 
     if (error) {
-      setSnackbar({
-        open: true,
-        message: "Greška pri brisanju.",
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: "Greška pri brisanju.", severity: "error" });
     } else {
-      setSnackbar({
-        open: true,
-        message: "Oglas obrisan.",
-        severity: "success",
-      });
+      setSnackbar({ open: true, message: "Oglas obrisan.", severity: "success" });
       location.reload();
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+    const fetchRealUserId = async () => {
+      if (!user?.email) return;
 
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-
-      const { data: userData } = await supabase
+      const { data, error } = await supabase
         .from("users")
-        .select("*")
-        .eq("id", authUser.id)
+        .select("id")
+        .eq("email", user.email)
         .maybeSingle();
-        
 
-      const fullUser = { ...authUser, ...userData };
-      setUser(fullUser);
+      console.log("fetchRealUserId -> Email:", user.email);
+      console.log("fetchRealUserId -> Rezultat:", data);
 
-      if (fullUser.role === "hr") {
+      if (data?.id) {
+        setRealUserId(data.id);
+      } else {
+        console.error("Nema usera sa tim emailom:", error);
+      }
+    };
+
+    fetchRealUserId();
+  }, [user]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user || !realUserId) return;
+
+      console.log("fetchData -> realUserId:", realUserId);
+      console.log("fetchData -> user.role:", user.role);
+
+      if (user.role === "hr") {
         const { data: jobs } = await supabase
           .from("jobs")
           .select("*")
-          .eq("user_id", fullUser.id);
+          .eq("user_id", realUserId);
 
         const stats = await Promise.all(
           (jobs || []).map(async (job) => {
@@ -175,27 +166,23 @@ export default function Statistic() {
               .eq("job_id", job.id);
 
             const enriched = await Promise.all(
-  (applications || []).map(async (app) => {
-    const { data: u } = await supabase
-      .from("users")
-      .select("name, surname, cv_url")
-      .eq("id", app.user_id)
-      .maybeSingle();
+              (applications || []).map(async (app) => {
+                const { data: u } = await supabase
+                  .from("users")
+                  .select("name, surname, cv_url")
+                  .eq("id", app.user_id)
+                  .maybeSingle();
 
-       if(!u){
-      console.log("nije nadjen ??", app.user_id)
-    }
-    return {
-      ...app,
-      user: {
-        name: u?.name || "Nepoznat",
-        surname: u?.surname || "",
-        cv_url: u?.cv_url || null,
-      },
-    };
-   
-  })
-);
+                return {
+                  ...app,
+                  user: {
+                    name: u?.name || "Nepoznat",
+                    surname: u?.surname || "",
+                    cv_url: u?.cv_url || null,
+                  },
+                };
+              })
+            );
 
             return {
               ...job,
@@ -205,11 +192,14 @@ export default function Statistic() {
         );
 
         setJobStats(stats);
-      } else if (fullUser.role === "user") {
-        const { data: applications } = await supabase
+      } else if (user.role === "user") {
+        const { data: applications, error } = await supabase
           .from("application_analysis")
           .select("id, job_id, score, analysis, created_at")
-          .eq("user_id", fullUser.id);
+          .eq("user_id", realUserId);
+
+        console.log("Korisnik ID:", realUserId);
+        console.log("Dohvaćene prijave iz Supabase-a:", applications, "Greška:", error);
 
         const enriched = await Promise.all(
           (applications || []).map(async (app) => {
@@ -221,7 +211,7 @@ export default function Statistic() {
 
             return {
               ...app,
-              job: job || { title: "Nepoznat posao" },
+              job: job || { title: "Nepoznat posao", company: "", date: new Date() },
             };
           })
         );
@@ -232,8 +222,12 @@ export default function Statistic() {
       setLoading(false);
     };
 
-    fetchData();
-  }, []);
+    if (!userLoading && realUserId) {
+      fetchData();
+    }
+  }, [realUserId, user, userLoading]);
+
+
 
   return (
     <Box sx={{ bgcolor: "#121212", minHeight: "100vh", color: "#fff" }}>

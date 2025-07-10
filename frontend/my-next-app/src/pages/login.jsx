@@ -13,6 +13,7 @@ import { useRouter} from "next/router";
 
 export default function Login() {
   const router = useRouter();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     const form = e.target;
@@ -26,10 +27,13 @@ export default function Login() {
 
     if (error) {
       alert("Greška: " + error.message);
-    } else {
-      router.push("/");
+      return;
     }
+
+    
+    router.push("/");
   };
+
 
   return (
     <Box

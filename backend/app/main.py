@@ -24,7 +24,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 app = FastAPI()
 
-# CORS za frontend
+# CORS for frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -44,5 +44,5 @@ def get_applications_by_hr(hr_id: str):
 def root():
     return {"message": "AI Resume Analyzer backend (Gemini) is running."}
 
-# Ukucane rute
+# routes
 app.include_router(gemini_router)

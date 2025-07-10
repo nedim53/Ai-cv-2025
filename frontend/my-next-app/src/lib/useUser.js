@@ -10,19 +10,45 @@ export default function useUser() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) return setLoading(false);
 
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
+      if (!session) {
+        setLoading(false);
+        return;
+      }
 
-      const { data: userData } = await supabase
+      const authUser = session.user;
+
+      let { data: userData, error } = await supabase
         .from("users")
-        .select("name, surname, role,cv_url")
-        .eq("id", authUser.id)
-        .single();
+        .select("id, name, surname, role, telephone, email, cv_url")
+        .eq("auth_id", authUser.id)
+        .maybeSingle();
 
-      setUser({ ...authUser, ...userData });
+      if (!userData) {
+        const fallbackUser = {
+          auth_id: authUser.id,
+          email: authUser.email,
+          name: "",
+          surname: "",
+          role: "user",
+          telephone: "",
+          cv_url: null,
+        };
+
+        const { error: insertError } = await supabase
+          .from("users")
+          .insert([fallbackUser]);
+
+        if (insertError) {
+          console.error("Greška pri automatskom unosu korisnika:", insertError.message);
+          setLoading(false);
+          return;
+        }
+
+        userData = fallbackUser;
+      }
+
+      setUser(userData);
       setLoading(false);
     };
 

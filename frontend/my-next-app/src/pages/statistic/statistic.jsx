@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
 import useUser from "@/lib/useUser";
+import MarkdownViewer from "@/components/MarkdownViewer";
 
 export default function Statistic() {
   const { user, loading: userLoading } = useUser();
@@ -412,9 +413,21 @@ export default function Statistic() {
                 label={`Ocjena: ${app.score}`}
                 sx={{ bgcolor: "white", color: "black", mb: 2 }}
               />
-              <Typography sx={{ color: "#ccc", mb: 1 }}>
-                AI ANALIZA:  {app.analysis}
-              </Typography>
+             <Typography sx={{ color: "#ff4d4d", mb: 1 }}>
+  🤖 AI analiza:
+</Typography>
+<Paper
+  sx={{
+    p: 2,
+    bgcolor: "#2a2a2a",
+    borderRadius: 2,
+    color: "#ddd",
+    mb: 2,
+  }}
+>
+  <MarkdownViewer markdown={app.analysis} />
+</Paper>
+
             
               <Typography
                 variant="caption"

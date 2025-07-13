@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import Navbar from "@/components/navbar";
 import useUser from "@/lib/useUser";
+import MarkdownViewer from "@/components/MarkdownViewer";
 
 
 export default function JobDescription() {
@@ -198,7 +199,7 @@ const handleAnalyze = async () => {
                   color: "#ddd",
                 }}
               >
-                {aiResult}
+      <MarkdownViewer markdown={aiResult} />
               </Paper>
             </>
           )}

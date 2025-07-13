@@ -18,9 +18,12 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/navbar";
 import Link from "next/link";
+import useUser from "@/lib/useUser";
 
 export default function Statistic() {
-  const [user, setUser] = useState(null);
+  const { user, loading: userLoading } = useUser();
+  const [realUserId, setRealUserId] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [jobStats, setJobStats] = useState([]);
   const [snackbar, setSnackbar] = useState({
@@ -28,7 +31,7 @@ export default function Statistic() {
     message: "",
     severity: "success",
   });
-
+  const [sortBy, setSortBy] = useState("latest");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editJob, setEditJob] = useState({
     id: null,
@@ -89,21 +92,13 @@ export default function Statistic() {
         experience,
       })
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", realUserId || user.id);
 
     if (error) {
       console.error("UPDATE ERROR:", error);
-      setSnackbar({
-        open: true,
-        message: "Greška pri uređivanju.",
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: "Greška pri uređivanju.", severity: "error" });
     } else {
-      setSnackbar({
-        open: true,
-        message: "Uspješno uređeno!",
-        severity: "success",
-      });
+      setSnackbar({ open: true, message: "Uspješno uređeno!", severity: "success" });
       setEditDialogOpen(false);
       location.reload();
     }
@@ -117,52 +112,51 @@ export default function Statistic() {
       .from("jobs")
       .delete()
       .eq("id", jobId)
-      .eq("user_id", user.id);
+      .eq("user_id", realUserId || user.id);
 
     if (error) {
-      setSnackbar({
-        open: true,
-        message: "Greška pri brisanju.",
-        severity: "error",
-      });
+      setSnackbar({ open: true, message: "Greška pri brisanju.", severity: "error" });
     } else {
-      setSnackbar({
-        open: true,
-        message: "Oglas obrisan.",
-        severity: "success",
-      });
+      setSnackbar({ open: true, message: "Oglas obrisan.", severity: "success" });
       location.reload();
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+    const fetchRealUserId = async () => {
+      if (!user?.email) return;
 
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-
-      const { data: userData } = await supabase
-        .from("user")
-        .select("*")
-        .eq("id", authUser.id)
+      const { data, error } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", user.email)
         .maybeSingle();
 
-      const fullUser = { ...authUser, ...userData };
-      setUser(fullUser);
+      console.log("fetchRealUserId -> Email:", user.email);
+      console.log("fetchRealUserId -> Rezultat:", data);
 
-      if (fullUser.role === "hr") {
+      if (data?.id) {
+        setRealUserId(data.id);
+      } else {
+        console.error("Nema usera sa tim emailom:", error);
+      }
+    };
+
+    fetchRealUserId();
+  }, [user]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user || !realUserId) return;
+
+      console.log("fetchData -> realUserId:", realUserId);
+      console.log("fetchData -> user.role:", user.role);
+
+      if (user.role === "hr") {
         const { data: jobs } = await supabase
           .from("jobs")
           .select("*")
-          .eq("user_id", fullUser.id);
+          .eq("user_id", realUserId);
 
         const stats = await Promise.all(
           (jobs || []).map(async (job) => {
@@ -174,14 +168,18 @@ export default function Statistic() {
             const enriched = await Promise.all(
               (applications || []).map(async (app) => {
                 const { data: u } = await supabase
-                  .from("user")
-                  .select("name, surname")
+                  .from("users")
+                  .select("name, surname, cv_url")
                   .eq("id", app.user_id)
                   .maybeSingle();
 
                 return {
                   ...app,
-                  user: u || { name: "Nepoznat", surname: "" },
+                  user: {
+                    name: u?.name || "Nepoznat",
+                    surname: u?.surname || "",
+                    cv_url: u?.cv_url || null,
+                  },
                 };
               })
             );
@@ -194,11 +192,14 @@ export default function Statistic() {
         );
 
         setJobStats(stats);
-      } else if (fullUser.role === "user") {
-        const { data: applications } = await supabase
+      } else if (user.role === "user") {
+        const { data: applications, error } = await supabase
           .from("application_analysis")
           .select("id, job_id, score, analysis, created_at")
-          .eq("user_id", fullUser.id);
+          .eq("user_id", realUserId);
+
+        console.log("Korisnik ID:", realUserId);
+        console.log("Dohvaćene prijave iz Supabase-a:", applications, "Greška:", error);
 
         const enriched = await Promise.all(
           (applications || []).map(async (app) => {
@@ -210,7 +211,7 @@ export default function Statistic() {
 
             return {
               ...app,
-              job: job || { title: "Nepoznat posao" },
+              job: job || { title: "Nepoznat posao", company: "", date: new Date() },
             };
           })
         );
@@ -221,8 +222,12 @@ export default function Statistic() {
       setLoading(false);
     };
 
-    fetchData();
-  }, []);
+    if (!userLoading && realUserId) {
+      fetchData();
+    }
+  }, [realUserId, user, userLoading]);
+
+
 
   return (
     <Box sx={{ bgcolor: "#121212", minHeight: "100vh", color: "#fff" }}>
@@ -235,6 +240,33 @@ export default function Statistic() {
         >
           📊 Statistika prijava
         </Typography>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value)}
+      style={{
+        padding: "8px",
+        backgroundColor: "#1e1e1e",
+        color: "#fff",
+        border: "1px solid #ff1a1a",
+        borderRadius: "4px",
+      }}
+    >
+      {user?.role === "hr" ?(
+        <>
+        <option value="latest">🕒 Najnovije</option>
+        <option value="oldest">🕒 Najstarije</option>
+        </>
+      ):(
+        <>
+      <option value="latest">🕒 Najnovije</option>
+      <option value="oldest">🕒 Najstarije</option>
+      <option value="score_desc">🔼 Ocjena: Najviša</option>
+      <option value="score_asc">🔽 Ocjena: Najniža</option>
+        </>
+    )}
+    </select>
+  </Box>
 
         {loading ? (
           <CircularProgress sx={{ color: "#ff1a1a" }} />
@@ -246,7 +278,18 @@ export default function Statistic() {
               Nemaš objavljenih konkursa.
             </Typography>
           ) : (
-            jobStats.map((job, index) => (
+            [...jobStats]
+  .sort((a, b) => {
+    switch (sortBy) {
+      case "oldest":
+        return new Date(a.created_at) - new Date(b.created_at);
+      case "latest":
+      default:
+        return new Date(b.created_at) - new Date(a.created_at);
+    }
+  })
+  .map((job, index) => (
+
               <Paper
                 key={index}
                 elevation={3}
@@ -290,9 +333,7 @@ export default function Statistic() {
                         sx={{ bgcolor: "#ff1a1a", color: "#fff" }}
                       />
                     </Box>
-                    <Typography variant="body2" sx={{ mt: 1, color: "#ccc" }}>
-                      {app.analysis}
-                    </Typography>
+                   
                     <Typography
                       variant="caption"
                       sx={{ color: "#888", mt: 1, display: "block" }}
@@ -330,7 +371,22 @@ export default function Statistic() {
         ) : jobStats.length === 0 ? (
           <Typography sx={{ color: "#ccc" }}>Nemaš prijava.</Typography>
         ) : (
-          jobStats.map((app, idx) => (
+          [...jobStats]
+  .sort((a, b) => {
+    switch (sortBy) {
+      case "score_desc":
+        return b.score - a.score;
+      case "score_asc":
+        return a.score - b.score;
+      case "oldest":
+        return new Date(a.created_at) - new Date(b.created_at);
+      case "latest":
+      default:
+        return new Date(b.created_at) - new Date(a.created_at);
+    }
+  })
+  .map((app, idx) => (
+
             <Paper
               key={idx}
               elevation={2}
@@ -354,11 +410,12 @@ export default function Statistic() {
               </Typography>
               <Chip
                 label={`Ocjena: ${app.score}`}
-                sx={{ bgcolor: "#ff1a1a", color: "#fff", mb: 2 }}
+                sx={{ bgcolor: "white", color: "black", mb: 2 }}
               />
-              <Typography variant="body2" sx={{ color: "#ccc" }}>
-                {app.analysis}
+              <Typography sx={{ color: "#ccc", mb: 1 }}>
+                AI ANALIZA:  {app.analysis}
               </Typography>
+            
               <Typography
                 variant="caption"
                 sx={{ color: "#888", mt: 1, display: "block" }}

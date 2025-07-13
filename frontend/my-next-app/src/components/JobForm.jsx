@@ -47,8 +47,7 @@ export default function CreateJobForm() {
       note: formData.note,
       email: formData.email,
       telephone: formData.telephone,
-      cv: formData.cv || false,
-      experience: formData.experience || false,
+      job_type: formData.job_type,
       user_id: user.id,
       created_at: new Date().toISOString(),
     };
@@ -128,26 +127,30 @@ export default function CreateJobForm() {
 
         <Divider sx={{ my: 4 }} />
 
-        <Typography variant="h6" sx={{ mb: 2, color: "text.secondary" }}>
-          Opciona polja za prijavu:
-        </Typography>
+        <Grid container spacing={2} sx={{ mt: 3 }}>
+  <Grid item xs={12} sm={6}>
+    <Typography variant="h6" sx={{ mb: 2, color: "text.secondary" }}>
+      Kategorija posla:
+    </Typography>
+    <TextField
+      select
+      name="job_type"
+      value={formData.job_type || ""}
+      onChange={handleChange}
+      fullWidth
+      SelectProps={{ native: true }}
+    >
+      <option value="">-- Odaberi kategoriju --</option>
+      <option value="it">IT</option>
+      <option value="administracija">Administracija</option>
+      <option value="ugostiteljstvo">Ugostiteljstvo</option>
+      <option value="proizvodnja">Proizvodnja</option>
+      <option value="obrazovanje">Obrazovanje</option>
+      <option value="zdravstvo">Zdravstvo</option>
+    </TextField>
+  </Grid>
+</Grid>
 
-        <Grid container spacing={2}>
-          {[{ label: "CV", name: "cv" }, { label: "Iskustvo", name: "experience" }].map((field) => (
-            <Grid item xs={6} sm={4} key={field.name}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name={field.name}
-                    checked={formData[field.name] || false}
-                    onChange={handleChange}
-                  />
-                }
-                label={field.label}
-              />
-            </Grid>
-          ))}
-        </Grid>
 
         <Button
           type="submit"

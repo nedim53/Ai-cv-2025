@@ -12,10 +12,14 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/navbar";
 import useUser from "@/lib/useUser";
+import SearchBar from "@/components/search";
 
 export default function HomePage() {
-  const { user, loading } = useUser(); 
+  const { user, loading } = useUser();
   const [jobs, setJobs] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [jobType, setJobType] = useState("");
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -58,6 +62,17 @@ export default function HomePage() {
         </Typography>
       </Box>
 
+      <Box sx={{ mb: 3, maxWidth: 400 }}>
+        <SearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          selectedCity={selectedCity}
+          setSelectedCity={setSelectedCity}
+          jobType={jobType}
+          setJobType={setJobType}
+        />
+      </Box>
+
       <Box sx={{ mb: 4 }}>
         <Typography
           variant="h5"
@@ -84,97 +99,127 @@ export default function HomePage() {
         </Typography>
       ) : (
         <Grid container spacing={4}>
-          {jobs.map((job) => (
-            <Grid item xs={12} sm={6} md={4} key={job.id} sx={{ display: "flex" }}>
-              <Card
-                sx={{
-                  flex: 1,
-                  backgroundColor: "#1f1f1f",
-                  borderRadius: "12px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-                  transition: "all 0.3s ease-in-out",
-                  border: "1px solid #2a2a2a",
-                  "&:hover": {
-                    transform: "scale(1.01)",
-                    boxShadow: "0 0 3px rgba(229, 9, 20, 0.6)",
-                  },
-                }}
+          {jobs
+            .filter((job) => {
+              const query = searchTerm.toLowerCase().trim();
+              const matchesSearch =
+                (job.title || "").toLowerCase().includes(query) ||
+                (job.company || "").toLowerCase().includes(query) ||
+                (job.city || "").toLowerCase().includes(query);
+
+              const matchesCity =
+                selectedCity === "" ||
+                job.city.toLowerCase() === selectedCity.toLowerCase();
+
+              const matchesType =
+                jobType === "" ||
+                (job.type || "").toLowerCase() === jobType.toLowerCase();
+
+              return matchesSearch && matchesCity && matchesType;
+            })
+
+            .map((job) => (
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={4}
+                key={job.id}
+                sx={{ display: "flex" }}
               >
-                <CardContent
+                <Card
                   sx={{
+                    flex: 1,
+                    backgroundColor: "#1f1f1f",
+                    borderRadius: "12px",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    flexGrow: 1,
+                    boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+                    transition: "all 0.3s ease-in-out",
+                    border: "1px solid #2a2a2a",
+                    "&:hover": {
+                      transform: "scale(1.01)",
+                      boxShadow: "0 0 3px rgba(229, 9, 20, 0.6)",
+                    },
                   }}
                 >
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: "bold",
-                        color: "#e50914",
-                        mb: 1,
-                        fontSize: "1.1rem",
-                      }}
-                    >
-                      {job.title}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      <strong>Kompanija:</strong> {job.company}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      <strong>Grad:</strong> {job.city}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Ističe:</strong>{" "}
-                      {new Date(job.date).toLocaleDateString()}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "#bbbbbb",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "normal",
-                        minHeight: "60px",
-                        maxHeight: "60px",
-                      }}
-                    >
-                      {job.description}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ mt: 3 }}>
-                    <Link href={`/jobdescription/${job.id}`} passHref legacyBehavior>
-                      <Button
-                        fullWidth
-                        variant="contained"
+                  <CardContent
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      flexGrow: 1,
+                    }}
+                  >
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography
+                        variant="h6"
                         sx={{
-                          bgcolor: "#e50914",
-                          color: "#fff",
                           fontWeight: "bold",
-                          textTransform: "none",
-                          borderRadius: "8px",
-                          "&:hover": {
-                            bgcolor: "#b0060f",
-                          },
+                          color: "#e50914",
+                          mb: 1,
+                          fontSize: "1.1rem",
                         }}
                       >
-                        Saznaj više
-                      </Button>
-                    </Link>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+                        {job.title}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        <strong>Kompanija:</strong> {job.company}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        <strong>Grad:</strong> {job.city}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Ističe:</strong>{" "}
+                        {new Date(job.date).toLocaleDateString()}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#bbbbbb",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "normal",
+                          minHeight: "60px",
+                          maxHeight: "60px",
+                        }}
+                      >
+                        {job.description}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ mt: 3 }}>
+                      <Link
+                        href={`/jobdescription/${job.id}`}
+                        passHref
+                        legacyBehavior
+                      >
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          sx={{
+                            bgcolor: "#e50914",
+                            color: "#fff",
+                            fontWeight: "bold",
+                            textTransform: "none",
+                            borderRadius: "8px",
+                            "&:hover": {
+                              bgcolor: "#b0060f",
+                            },
+                          }}
+                        >
+                          Saznaj više
+                        </Button>
+                      </Link>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
         </Grid>
       )}
     </Box>

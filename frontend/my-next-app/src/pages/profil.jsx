@@ -20,33 +20,86 @@ export default function Profil() {
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [cvFile, setCvFile] = useState(null);
+  const [uploadedPath, setUploadedPath] = useState(""); 
 
   React.useEffect(() => {
     if (user) {
       setFormData(user);
+      setUploadedPath(user.cv_url || ""); 
     }
   }, [user]);
 
   const handleCvUpload = async () => {
     if (!cvFile || !user) return;
-    const fileName = `${user.id}/cv_${Date.now()}_${cvFile.name}`;
 
-    const { error } = await supabase.storage
-      .from("user-uploads")
-      .upload(fileName, cvFile, { upsert: true });
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-    if (error) {
-      alert("Greška pri uploada: " + error.message);
-    } else {
-      alert("CV uspješno postavljen.");
+      if (sessionError || !session) {
+        alert("Greška pri dohvaćanju sesije.");
+        return;
+      }
+
+      const uid = session.user.id;
+      const filePath = `${uid}/cv_${Date.now()}_${cvFile.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("user-uploads")
+        .upload(filePath, cvFile, { upsert: true });
+
+      if (uploadError) {
+        console.error("Upload greška:", uploadError.message);
+        alert("Greška pri uploadu: " + uploadError.message);
+        return;
+      }
+
+      const { error: dbError } = await supabase
+        .from("users")
+        .update({ cv_url: filePath }) 
+        .eq("auth_id", uid);
+
+      if (dbError) {
+        console.error("DB greška:", dbError.message);
+        alert("Greška pri ažuriranju URL-a: " + dbError.message);
+      } else {
+        setUploadedPath(filePath); 
+        alert("CV uspješno uploadovan.");
+      }
+    } catch (err) {
+      console.error("⚠️ Neočekivana greška:", err);
+      alert("Desila se greška. Pokušajte ponovo.");
     }
-
-    const publicUrl = supabase.storage
-      .from("user-uploads")
-      .getPublicUrl(fileName).data.publicUrl;
-
-    await supabase.from("user").update({ cv_url: publicUrl }).eq("id", user.id);
   };
+
+const handleCvDownload = async () => {
+  if (!uploadedPath) {
+    alert("CV nije dostupan.");
+    return;
+  }
+
+  const { data, error } = await supabase.storage
+    .from("user-uploads")
+    .download(uploadedPath);
+
+  if (error) {
+    console.error("Greška pri downloadu:", error.message);
+    alert("Greška pri preuzimanju CV-a: " + error.message);
+    return;
+  }
+
+  const blobUrl = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = uploadedPath.split("/").pop(); // name of the file
+  document.body.appendChild(a); // this is for firefoxs
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(blobUrl); // this is just for cleaning up
+};
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +113,7 @@ export default function Profil() {
     const { name, surname, telephone } = formData;
 
     const { error } = await supabase
-      .from("user")
+      .from("users")
       .update({ name, surname, telephone })
       .eq("id", user.id);
 
@@ -75,7 +128,6 @@ export default function Profil() {
   return (
     <Box sx={{ bgcolor: "#121212", minHeight: "100vh", color: "#fff" }}>
       <Navbar user={user} loading={loading} />
-
       <Box sx={{ px: 3, py: 6, display: "flex", justifyContent: "center" }}>
         {loading ? (
           <CircularProgress sx={{ color: "#ff1a1a", mt: 8 }} />
@@ -110,11 +162,7 @@ export default function Profil() {
             {["name", "surname", "telephone"].map((field) => (
               <Box sx={{ mb: 3 }} key={field}>
                 <Typography variant="subtitle2" sx={{ color: "#aaa", mb: 0.5 }}>
-                  {field === "name"
-                    ? "Ime"
-                    : field === "surname"
-                    ? "Prezime"
-                    : "Telefon"}
+                  {field === "name" ? "Ime" : field === "surname" ? "Prezime" : "Telefon"}
                 </Typography>
                 {editMode ? (
                   <TextField
@@ -141,62 +189,67 @@ export default function Profil() {
             <ProfileItem label="Uloga" value={user.role} />
             <ProfileItem label="Korisnički ID" value={user.id} />
 
-            <Paper
-              elevation={2}
-              sx={{
-                mt: 5,
-                p: 3,
-                borderRadius: 3,
-                bgcolor: "#2a2a2a",
-                border: "1px dashed #ff4d4d",
-              }}
-            >
-              <Typography variant="h6" sx={{ color: "#ff4d4d", mb: 2 }}>
-                📎 CV datoteka
-              </Typography>
-
-              <Input
-                type="file"
-                inputProps={{ accept: ".pdf,.docx" }}
-                onChange={(e) => setCvFile(e.target.files[0])}
+            {user.role === "user" && (
+              <Paper
+                elevation={2}
                 sx={{
-                  mb: 2,
-                  bgcolor: "#1e1e1e",
-                  p: 1.5,
-                  borderRadius: 1,
-                  color: "#fff",
+                  mt: 5,
+                  p: 3,
+                  borderRadius: 3,
+                  bgcolor: "#2a2a2a",
+                  border: "1px dashed #ff4d4d",
                 }}
-              />
+              >
+                <Typography variant="h6" sx={{ color: "#ff4d4d", mb: 2 }}>
+                  📎 CV datoteka
+                </Typography>
 
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <Button
-                  variant="contained"
-                  onClick={handleCvUpload}
+                <Input
+                  type="file"
+                  inputProps={{ accept: ".pdf,.docx" }}
+                  onChange={(e) => setCvFile(e.target.files[0])}
                   sx={{
-                    bgcolor: "#ff1a1a",
-                    ":hover": { bgcolor: "#cc0000" },
-                    fontWeight: "bold",
+                    mb: 2,
+                    bgcolor: "#1e1e1e",
+                    p: 1.5,
+                    borderRadius: 1,
+                    color: "#fff",
                   }}
-                >
-                  Upload CV
-                </Button>
+                />
+                {cvFile && (
+                  <Typography variant="body2" sx={{ color: "#00e6b8", mb: 2 }}>
+                    📎 Odabrani fajl: {cvFile.name}
+                  </Typography>
+                )}
 
-                {user.cv_url && (
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                   <Button
-                    href={user.cv_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    variant="contained"
+                    onClick={handleCvUpload}
                     sx={{
-                      color: "#00e6b8",
-                      textTransform: "none",
+                      bgcolor: "#ff1a1a",
+                      ":hover": { bgcolor: "#cc0000" },
                       fontWeight: "bold",
                     }}
                   >
-                    📄 Pregledaj CV
+                    Upload CV
                   </Button>
-                )}
-              </Box>
-            </Paper>
+
+                  {uploadedPath && (
+                    <Button
+                      onClick={handleCvDownload}
+                      sx={{
+                        color: "#00e6b8",
+                        textTransform: "none",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      📄 Pregledaj CV
+                    </Button>
+                  )}
+                </Box>
+              </Paper>
+            )}
 
             <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
               {editMode ? (

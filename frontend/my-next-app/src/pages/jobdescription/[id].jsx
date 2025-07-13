@@ -10,58 +10,80 @@ import {
   CircularProgress,
 } from "@mui/material";
 import Navbar from "@/components/navbar";
+import useUser from "@/lib/useUser";
+
 
 export default function JobDescription() {
   const router = useRouter();
   const { id } = router.query;
-
+  const { user, loading: userLoading } = useUser();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [file, setFile] = useState(null);
-  const [parsedText, setParsedText] = useState("");
   const [aiResult, setAiResult] = useState("");
-
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
   useEffect(() => {
     if (!id) return;
+
     const fetchJob = async () => {
-      const { data, error } = await supabase.from("jobs").select("*").eq("id", id).single();
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("id", id)
+        .single();
+
       if (!error) setJob(data);
       setLoading(false);
     };
+
     fetchJob();
   }, [id]);
 
-  const handleUpload = async () => {
-    if (!file || !job) return;
+  useEffect(() => {
+      const fetchExistingAnalysis = async () => {
+    if (!id || !user) return;
 
-    const user = await supabase.auth.getUser();
-    const userId = user.data.user?.id;
-    const fileName = `${userId}/${Date.now()}_${file.name}`;
-
-    const { error } = await supabase.storage
-      .from("user-uploads")
-      .upload(fileName, file);
-
-    if (error) {
-      alert("Greška prilikom uploada: " + error.message);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("job_description", job.description);
-    formData.append("job_id", job.id);
-    formData.append("user_id", userId);
-
-    const res = await fetch("http://localhost:8000/upload", {
-      method: "POST",
-      body: formData,
-    });
+    const res = await fetch(
+      `${API_BASE}/get-existing-analysis/${user.id}/${id}`
+    );
 
     const result = await res.json();
-    setParsedText(result.parsed_text || "");
-    setAiResult(result.analysis || result.error || "Greška prilikom obrade.");
+    if (result?.analysis) {
+      setAiResult(result.analysis);
+    } else {
+      setAiResult("");
+    }
   };
+
+  fetchExistingAnalysis();
+}, [id, user]);
+
+
+const handleAnalyze = async () => {
+  if (!user || !job) return;
+
+  const res = await fetch(
+    `${API_BASE}/analyze-cv/${user.id}/${job.id}`,
+    { method: "POST" }
+  );
+
+  const data = await res.json();
+  const analysisId = data.analysis_id;
+
+  const interval = setInterval(async () => {
+    const check = await fetch(
+      `${API_BASE}/get-analysis/${analysisId}`
+    );
+    const result = await check.json();
+
+    if (result.analysis) {
+      setAiResult(result.analysis);
+      clearInterval(interval);
+    }
+  }, 10000);
+};
+
+
+
 
   if (loading || !job) {
     return (
@@ -124,7 +146,7 @@ export default function JobDescription() {
           </Typography>
         </Paper>
 
-        {/* Upload sekcija */}
+        {/* Upload section */}
         <Paper
           elevation={3}
           sx={{
@@ -141,23 +163,11 @@ export default function JobDescription() {
           <Typography variant="h6" sx={{ mb: 2, color: "#ff4d4d" }}>
             📎 Pošalji svoj CV za AI analizu
           </Typography>
-          <Input
-            type="file"
-            fullWidth
-            inputProps={{ accept: ".pdf,.docx" }}
-            onChange={(e) => setFile(e.target.files[0])}
-            disableUnderline
-            sx={{
-              mb: 3,
-              bgcolor: "#2a2a2a",
-              p: 1.5,
-              borderRadius: 1,
-              color: "#fff",
-            }}
-          />
+          
+
           <Button
             variant="contained"
-            onClick={handleUpload}
+            onClick={handleAnalyze}
             sx={{
               bgcolor: "#e50914",
               ":hover": { bgcolor: "#b0060f" },
@@ -172,25 +182,7 @@ export default function JobDescription() {
             🚀 Pošalji i analiziraj
           </Button>
 
-          {parsedText && (
-            <>
-              <Typography variant="h6" sx={{ mb: 1, color: "#ff4d4d" }}>
-                ✅ Parsiran tekst:
-              </Typography>
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 4,
-                  bgcolor: "#2a2a2a",
-                  borderRadius: 2,
-                  whiteSpace: "pre-wrap",
-                  color: "#ddd",
-                }}
-              >
-                {parsedText}
-              </Paper>
-            </>
-          )}
+
 
           {aiResult && (
             <>

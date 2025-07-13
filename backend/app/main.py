@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from docx import Document
 import pdfplumber
-from io import BytesIO
-import pytesseract
+#from io import BytesIO
+#import pytesseract
 from app.gemini import router as gemini_router
 from pathlib import Path
 from supabase import create_client, Client
@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 import os
 
 # OCR setup
-pytesseract.pytesseract.tesseract_cmd = r"C:\Tesseract\tesseract.exe"
-os.environ["TESSDATA_PREFIX"] = r"C:\Tesseract"
+#pytesseract.pytesseract.tesseract_cmd = r"C:\Tesseract\tesseract.exe"
+#os.environ["TESSDATA_PREFIX"] = r"C:\Tesseract"
 
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)

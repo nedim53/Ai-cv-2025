@@ -39,23 +39,23 @@ export default function JobDescription() {
   }, [id]);
 
   useEffect(() => {
-      const fetchExistingAnalysis = async () => {
-    if (!id || !user) return;
+  if (!userLoading && user?.id && id) {
+    const fetchExistingAnalysis = async () => {
+      const res = await fetch(
+        `${API_BASE}/get-existing-analysis/${user.id}/${id}`
+      );
+      const result = await res.json();
+      if (result?.analysis) {
+        setAiResult(result.analysis);
+      } else {
+        setAiResult("");
+      }
+    };
 
-    const res = await fetch(
-      `${API_BASE}/get-existing-analysis/${user.id}/${id}`
-    );
+    fetchExistingAnalysis();
+  }
+}, [userLoading, user?.id, id]);
 
-    const result = await res.json();
-    if (result?.analysis) {
-      setAiResult(result.analysis);
-    } else {
-      setAiResult("");
-    }
-  };
-
-  fetchExistingAnalysis();
-}, [id, user?.id]);
 
 
 const handleAnalyze = async () => {

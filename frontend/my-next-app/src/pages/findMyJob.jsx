@@ -33,10 +33,11 @@ export default function FindMyJob() {
   };
 
   useEffect(() => {
-    if (user?.id) {
-      fetchRecommendedJobs();
-    }
-  }, [user]);
+  if (user?.id) {
+    fetchRecommendedJobs();
+  }
+}, [user?.id]);
+
 
   return (
     <Box sx={{ bgcolor: "#121212", minHeight: "100vh", color: "#fff" }}>

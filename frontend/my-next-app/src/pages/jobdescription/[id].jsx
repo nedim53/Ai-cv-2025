@@ -55,7 +55,7 @@ export default function JobDescription() {
   };
 
   fetchExistingAnalysis();
-}, [id, user]);
+}, [id, user?.id]);
 
 
 const handleAnalyze = async () => {

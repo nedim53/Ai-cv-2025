@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/navbar";
+import MarkdownViewer from "@/components/MarkdownViewer";
 
 export default function JobDetailPage() {
   const router = useRouter();
@@ -233,9 +234,8 @@ export default function JobDetailPage() {
 
                 <Divider sx={{ my: 2, borderColor: "#333" }} />
 
-                <Typography variant="body2" sx={{ color: "#ccc" }}>
-                  {app.analysis}
-                </Typography>
+                <MarkdownViewer markdown={app.analysis} />
+
 
                 <Typography
                   variant="caption"

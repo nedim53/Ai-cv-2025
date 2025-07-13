@@ -33,10 +33,10 @@ export default function FindMyJob() {
   };
 
   useEffect(() => {
-  if (user?.id) {
+  if (!loading && user?.id) {
     fetchRecommendedJobs();
   }
-}, [user?.id]);
+}, [loading, user?.id]);
 
 
   return (

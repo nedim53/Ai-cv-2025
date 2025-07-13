@@ -94,6 +94,21 @@ export default function Navbar() {
             StATISTIKA
           </Button>
         </Link>
+
+        <Link href="/findMyJob" passHref>
+          <Button
+            sx={{
+              color: "#fff",
+              borderBottom: "2px solid transparent",
+              "&:hover": {
+                borderColor: "#ff1a1a",
+                color: "#ff1a1a",
+              },
+            }}
+          >
+            Pronađi posao
+          </Button>
+        </Link>
       </Stack>
       {loading ? (
         <Typography variant="body1" sx={{ color: "#ff4d4d" }}>

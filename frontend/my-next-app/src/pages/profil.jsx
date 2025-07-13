@@ -267,6 +267,19 @@ const handleCvDownload = async () => {
                 </Button>
               )}
             </Box>
+
+              <Button
+  onClick={async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }}
+  variant="outlined"
+  color="warning"
+>
+  🚪 Odjavi se
+</Button>
+
+
           </Paper>
         )}
       </Box>

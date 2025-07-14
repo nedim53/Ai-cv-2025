@@ -61,12 +61,20 @@ async def upload_cv(user_id: str = Form(...), file: UploadFile = File(...)):
 @router.get("/user-job-analysis/{user_id}")
 def get_user_job_analysis(user_id: str):
     try:
+        print("🔍 FETCHING ANALYSIS for user:", user_id)
+
         user = supabase.table("users").select("job_category, job_keywords").eq("id", user_id).single().execute()
+        print("👤 USER RAW:", user)
+
         if not user.data:
+            print("❌ Nema korisničkih podataka u bazi.")
             raise HTTPException(status_code=404, detail="Nema podataka")
 
-        category = user.data["job_category"]
-        keywords = user.data["job_keywords"]
+        category = user.data.get("job_category")
+        keywords = user.data.get("job_keywords")
+
+        print("✅ category:", category)
+        print("✅ keywords:", keywords)
 
         if not category or not keywords:
             raise HTTPException(status_code=404, detail="Nema spremljene analize")
@@ -79,13 +87,16 @@ def get_user_job_analysis(user_id: str):
             return sum(1 for kw in keywords if kw.lower() in combined)
 
         ranked = sorted(jobs, key=match_score, reverse=True)
+
         return {
             "category": category,
             "keywords": keywords,
             "results": ranked[:10]
         }
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("🔥 BACKEND ERROR:", str(e))
+        raise HTTPException(status_code=500, detail=f"Greška: {str(e)}")
 
 
 @router.post("/analyze-cv/{user_id}/{job_id}")

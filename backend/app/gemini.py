@@ -12,6 +12,7 @@ import json
 from docx import Document
 import io
 import requests
+from datetime import datetime
 from PIL import Image
 import pytesseract
 
@@ -44,8 +45,47 @@ async def upload_cv(user_id: str = Form(...), file: UploadFile = File(...)):
 
     supabase.table("users").update({"cv_url": signed.data["signedUrl"]}).eq("id", user_id).execute()
 
+    try:
+        analysis = find_my_jobs(user_id)
+        supabase.table("users").update({
+            "job_keywords": analysis["keywords"],
+            "job_category": analysis["category"],
+            "job_analysis_last_updated": datetime.utcnow().isoformat()
+        }).eq("id", user_id).execute()
+    except Exception as e:
+        print("⚠️ Greška u automatskoj analizi:", str(e))
+
     return {"success": True, "cv_url": signed.data["signedUrl"]}
 
+
+@router.get("/user-job-analysis/{user_id}")
+def get_user_job_analysis(user_id: str):
+    try:
+        user = supabase.table("users").select("job_category, job_keywords").eq("id", user_id).single().execute()
+        if not user.data:
+            raise HTTPException(status_code=404, detail="Nema podataka")
+
+        category = user.data["job_category"]
+        keywords = user.data["job_keywords"]
+
+        if not category or not keywords:
+            raise HTTPException(status_code=404, detail="Nema spremljene analize")
+
+        jobs_response = supabase.table("jobs").select("*").ilike("job_type", category).execute()
+        jobs = jobs_response.data if jobs_response.data else []
+
+        def match_score(job):
+            combined = f"{job['title']} {job['description']}".lower()
+            return sum(1 for kw in keywords if kw.lower() in combined)
+
+        ranked = sorted(jobs, key=match_score, reverse=True)
+        return {
+            "category": category,
+            "keywords": keywords,
+            "results": ranked[:10]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/analyze-cv/{user_id}/{job_id}")

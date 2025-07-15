@@ -47,11 +47,14 @@ async def upload_cv(user_id: str = Form(...), file: UploadFile = File(...)):
 
     try:
         analysis = find_my_jobs(user_id)
-        supabase.table("users").update({
+        update_result = supabase.table("users").update({
             "job_keywords": analysis["keywords"],
             "job_category": analysis["category"],
             "job_analysis_last_updated": datetime.utcnow().isoformat()
         }).eq("id", user_id).execute()
+
+        print("📝 UPDATE RESULT:", update_result)
+
     except Exception as e:
         print("⚠️ Greška u automatskoj analizi:", str(e))
 

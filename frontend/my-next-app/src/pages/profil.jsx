@@ -29,50 +29,34 @@ export default function Profil() {
     }
   }, [user]);
 
-  const handleCvUpload = async () => {
-    if (!cvFile || !user) return;
+const handleCvUpload = async () => {
+  if (!cvFile || !user) return;
 
-    try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+  const formData = new FormData();
+  formData.append("user_id", user.id); 
+  formData.append("file", cvFile);
 
-      if (sessionError || !session) {
-        alert("Greška pri dohvaćanju sesije.");
-        return;
-      }
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/upload-cv`, {
+      method: "POST",
+      body: formData,
+    });
 
-      const uid = session.user.id;
-      const filePath = `${uid}/cv_${Date.now()}_${cvFile.name}`;
+    const data = await res.json();
 
-      const { error: uploadError } = await supabase.storage
-        .from("user-uploads")
-        .upload(filePath, cvFile, { upsert: true });
-
-      if (uploadError) {
-        console.error("Upload greška:", uploadError.message);
-        alert("Greška pri uploadu: " + uploadError.message);
-        return;
-      }
-
-      const { error: dbError } = await supabase
-        .from("users")
-        .update({ cv_url: filePath }) 
-        .eq("auth_id", uid);
-
-      if (dbError) {
-        console.error("DB greška:", dbError.message);
-        alert("Greška pri ažuriranju URL-a: " + dbError.message);
-      } else {
-        setUploadedPath(filePath); 
-        alert("CV uspješno uploadovan.");
-      }
-    } catch (err) {
-      console.error("⚠️ Neočekivana greška:", err);
-      alert("Desila se greška. Pokušajte ponovo.");
+    if (!res.ok) {
+      alert("Greška: " + (data.detail || "Neuspješan upload."));
+      return;
     }
-  };
+
+    setUploadedPath(data.cv_url);
+    alert("✅ CV uspješno uploadovan i analiziran!");
+  } catch (err) {
+    console.error("❌ Upload greška:", err);
+    alert("Greška pri slanju fajla.");
+  }
+};
+
 
 const handleCvDownload = async () => {
   if (!uploadedPath) {

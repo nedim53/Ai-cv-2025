@@ -26,6 +26,8 @@ export default function useUser() {
 
     if (!userData) {
       const fallbackUser = {
+          id: authUser.id, 
+
         auth_id: authUser.id,
         email: authUser.email,
         name: "",

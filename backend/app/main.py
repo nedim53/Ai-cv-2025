@@ -29,7 +29,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://ai-cv-2025.vercel.app", 
-        "http://localhost:3000",          
+        "http://localhost:3000",  
+        "https://ai-cv-2025-git-main-nedim53s-projects.vercel.app",        
     ],
     allow_credentials=True,
     allow_methods=["*"],

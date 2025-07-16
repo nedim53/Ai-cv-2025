@@ -46,7 +46,9 @@ async def upload_cv(user_id: str = Form(...), file: UploadFile = File(...)):
     supabase.table("users").update({"cv_url": signed.data["signedUrl"]}).eq("id", user_id).execute()
 
     try:
+        print("🧠 Pokrećem find_my_jobs za:", user_id)
         analysis = find_my_jobs(user_id)
+        print("🎯 Dobijen AI rezultat:", analysis)
         update_result = supabase.table("users").update({
             "job_keywords": analysis["keywords"],
             "job_category": analysis["category"],

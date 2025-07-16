@@ -35,9 +35,6 @@ const fetchRecommended = async () => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/user-job-analysis/${user.id}`);
     const data = await res.json();
 
-    console.log("Preporučeni poslovi:", data.results);
-    console.log("Kategorija:", data.category);
-    console.log("Ključne riječi:", data.keywords);
     setRecommendedJobs(data.results || []);
 setDetectedCategory(data.category || "");
 setKeywords(data.keywords || []);
@@ -86,6 +83,10 @@ setKeywords(data.keywords || []);
         >
           Dobrodošli
         </Typography>
+
+{user?.role ==="user" && (
+  <>
+
         <Typography variant="h6" sx={{ color: "#999999" }}>
           Pregledaj otvorene pozicije i pronađi svoju priliku.
         </Typography>
@@ -99,7 +100,7 @@ setKeywords(data.keywords || []);
     mt: 2,
     mb: 4
   }}
->
+> 
   🧠 Nađi mi posao
 </Button>
 {loadingRecommended && <CircularProgress sx={{ color: "#00e6b8", mt: 2 }} />}
@@ -112,6 +113,7 @@ setKeywords(data.keywords || []);
     <Typography variant="body1" sx={{ color: "#aaa", mb: 2 }}>
       Ključne riječi: {keywords.join(", ")}
     </Typography>
+
 
     <Grid container spacing={3}>
       {recommendedJobs.map((job) => (
@@ -136,8 +138,10 @@ setKeywords(data.keywords || []);
     </Grid>
   </Box>
 )}
-
+      </>
+)}
       </Box>
+
 
       <Box sx={{ mb: 3, maxWidth: 400 }}>
         <SearchBar

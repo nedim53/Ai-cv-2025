@@ -95,6 +95,7 @@ export default function Navbar() {
           </Button>
         </Link>
 
+{user?.role ==="user" && (
         <Link href="/findMyJob" passHref>
           <Button
             sx={{
@@ -109,6 +110,7 @@ export default function Navbar() {
             Pronađi posao
           </Button>
         </Link>
+)}
       </Stack>
       {loading ? (
         <Typography variant="body1" sx={{ color: "#ff4d4d" }}>

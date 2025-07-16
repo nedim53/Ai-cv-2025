@@ -29,26 +29,41 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\Tesseract\tesseract.exe"
 os.environ['TESSDATA_PREFIX'] = r"C:\Tesseract"
 
 
+
+
+
 @router.post("/upload-cv")
 async def upload_cv(user_id: str = Form(...), file: UploadFile = File(...)):
-    ext = os.path.splitext(file.filename)[-1].lower()
-    filename = f"{user_id}/cv_{int(time.time())}_{file.filename}"
-
-    result = supabase.storage.from_("user-uploads").upload(filename, await file.read(), upsert=True)
-
-    if result.error:
-        raise HTTPException(status_code=500, detail="Greška pri uploadu.")
-
-    signed = supabase.storage.from_("user-uploads").create_signed_url(filename, 3600 * 24)
-    if signed.error:
-        raise HTTPException(status_code=500, detail="Greška pri kreiranju signed URL-a")
-
-    supabase.table("users").update({"cv_url": signed.data["signedUrl"]}).eq("id", user_id).execute()
-
     try:
-        print("🧠 Pokrećem find_my_jobs za:", user_id)
+        # Create a unique filename based on user ID and timestamp
+        ext = os.path.splitext(file.filename)[-1].lower()
+        filename = f"{user_id}/cv_{int(time.time())}_{file.filename}"
+        file_bytes = await file.read()
+
+        # Upload file to Supabase Storage
+        upload_response = supabase.storage.from_("user-uploads").upload(filename, file_bytes)
+
+        print("📦 Upload result:", upload_response)
+        print("🔢 Type:", type(upload_response))
+        print("🔎 Dict:", upload_response.__dict__)
+
+        
+        signed_response = supabase.storage.from_("user-uploads").create_signed_url(filename, 3600 * 24)
+        if not signed_response or not signed_response.get("signedUrl"):
+            raise HTTPException(status_code=500, detail="Failed to generate signed URL")
+
+        signed_url = signed_response["signedUrl"]
+        print("🔐 Signed URL:", signed_url)
+
+        # Store the relative path in the database (NOT the full signed URL!)
+        supabase.table("users").update({"cv_url": filename}).eq("id", user_id).execute()
+
+        # Run job analysis with Gemini
+        print("🧠 Running job analysis for:", user_id)
         analysis = find_my_jobs(user_id)
-        print("🎯 Dobijen AI rezultat:", analysis)
+        print("🎯 AI result:", analysis)
+
+        # Update database with analysis results
         update_result = supabase.table("users").update({
             "job_keywords": analysis["keywords"],
             "job_category": analysis["category"],
@@ -57,19 +72,20 @@ async def upload_cv(user_id: str = Form(...), file: UploadFile = File(...)):
 
         print("📝 UPDATE RESULT:", update_result)
 
-    except Exception as e:
-        print("⚠️ Greška u automatskoj analizi:", str(e))
+        return {"success": True, "cv_url": signed_url}
 
-    return {"success": True, "cv_url": signed.data["signedUrl"]}
+    except Exception as e:
+        print("⚠️ upload_cv ERROR:", str(e))
+        raise HTTPException(status_code=500, detail="Error: " + str(e))
+
+
 
 
 @router.get("/user-job-analysis/{user_id}")
 def get_user_job_analysis(user_id: str):
     try:
-        print("🔍 FETCHING ANALYSIS for user:", user_id)
 
         user = supabase.table("users").select("job_category, job_keywords").eq("id", user_id).single().execute()
-        print("👤 USER RAW:", user)
 
         if not user.data:
             print("❌ Nema korisničkih podataka u bazi.")
@@ -78,8 +94,6 @@ def get_user_job_analysis(user_id: str):
         category = user.data.get("job_category")
         keywords = user.data.get("job_keywords")
 
-        print("✅ category:", category)
-        print("✅ keywords:", keywords)
 
         if not category or not keywords:
             raise HTTPException(status_code=404, detail="Nema spremljene analize")
@@ -100,7 +114,7 @@ def get_user_job_analysis(user_id: str):
         }
 
     except Exception as e:
-        print("🔥 BACKEND ERROR:", str(e))
+        print(" BACKEND ERROR:", str(e))
         raise HTTPException(status_code=500, detail=f"Greška: {str(e)}")
 
 
@@ -194,7 +208,7 @@ def run_analysis_task(analysis_id: str):
         response = model.generate_content(prompt)
         analysis_result = response.text if hasattr(response, "text") else str(response)
     except Exception as e:
-        analysis_result = f"❌ Greška pri AI analizi: {str(e)}"
+        analysis_result = f"Greška pri AI analizi: {str(e)}"
 
     score_match = re.search(r"(\d{1,2}\.\d)", analysis_result)
     score = float(score_match.group(1)) if score_match else 0.0

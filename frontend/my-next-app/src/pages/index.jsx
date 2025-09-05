@@ -13,7 +13,6 @@ export default function HomePage() {
   const [jobs, setJobs] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCity, setSelectedCity] = useState("")
-  const [jobType, setJobType] = useState("")
   const [recommendedJobs, setRecommendedJobs] = useState([])
   const [detectedCategory, setDetectedCategory] = useState("")
   const [keywords, setKeywords] = useState([])
@@ -336,8 +335,6 @@ export default function HomePage() {
               onChange={setSearchTerm}
               selectedCity={selectedCity}
               setSelectedCity={setSelectedCity}
-              jobType={jobType}
-              setJobType={setJobType}
             />
           </Box>
         </Box>
@@ -384,9 +381,7 @@ export default function HomePage() {
 
                   const matchesCity = selectedCity === "" || job.city.toLowerCase() === selectedCity.toLowerCase()
 
-                  const matchesType = jobType === "" || (job.type || "").toLowerCase() === jobType.toLowerCase()
-
-                  return matchesSearch && matchesCity && matchesType
+                  return matchesSearch && matchesCity
                 })
                 .map((job) => (
                   <Grid item xs={12} sm={6} md={4} key={job.id} sx={{ display: "flex" }}>

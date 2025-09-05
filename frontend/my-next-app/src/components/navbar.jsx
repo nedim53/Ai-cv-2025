@@ -19,7 +19,8 @@ import {
   Person, 
   Logout,
   Login,
-  PersonAdd
+  PersonAdd,
+  TrendingUp
 } from "@mui/icons-material"
 import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
@@ -114,13 +115,25 @@ export default function Navbar({ user, loading }) {
               
               <Link href="/findMyJob" style={{ textDecoration: "none" }}>
                 <Button 
-            sx={{
+                  sx={{ 
                     color: "#fff", 
                     fontWeight: 500,
                     "&:hover": { color: "#e50914" }
                   }}
                 >
                   Nađi posao
+                </Button>
+              </Link>
+              
+              <Link href="/statistic" style={{ textDecoration: "none" }}>
+                <Button 
+                  sx={{ 
+                    color: "#fff", 
+                    fontWeight: 500,
+                    "&:hover": { color: "#e50914" }
+                  }}
+                >
+                  Statistike
                 </Button>
               </Link>
             </>
@@ -207,6 +220,19 @@ export default function Navbar({ user, loading }) {
                     </Link>
                   </MenuItem>
                 )}
+                
+                <MenuItem 
+                  onClick={handleClose}
+                  sx={{ 
+                    color: "#fff",
+                    "&:hover": { bgcolor: "rgba(229, 9, 20, 0.1)" }
+                  }}
+                >
+                  <TrendingUp sx={{ mr: 1, fontSize: "1.2rem" }} />
+                  <Link href="/statistic" style={{ textDecoration: "none", color: "inherit" }}>
+                    Statistike
+                  </Link>
+                </MenuItem>
                 
                 <Divider sx={{ bgcolor: "#333", my: 1 }} />
                 

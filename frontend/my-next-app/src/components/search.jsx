@@ -1,18 +1,14 @@
 "use client"
 import {
-  Radio,
-  FormControlLabel,
   TextField,
   Box,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  FormLabel,
-  RadioGroup,
 } from "@mui/material"
 
-export default function SearchBar({ value, onChange, selectedCity, setSelectedCity, jobType, setJobType }) {
+export default function SearchBar({ value, onChange, selectedCity, setSelectedCity }) {
   return (
     <Box
       sx={{
@@ -106,50 +102,6 @@ export default function SearchBar({ value, onChange, selectedCity, setSelectedCi
         </Select>
       </FormControl>
 
-      <FormControl
-        component="fieldset"
-        sx={{
-          mt: 3,
-          p: 2,
-          background: "rgba(255, 255, 255, 0.03)",
-          borderRadius: "12px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-        }}
-      >
-        <FormLabel
-          component="legend"
-          sx={{
-            color: "#aaa",
-            fontWeight: "600",
-            "&.Mui-focused": {
-              color: "#dc2626",
-            },
-          }}
-        >
-          Tip posla
-        </FormLabel>
-        <RadioGroup
-          row
-          value={jobType}
-          onChange={(e) => setJobType(e.target.value)}
-          sx={{
-            mt: 1,
-            "& .MuiFormControlLabel-label": {
-              color: "#fff",
-            },
-            "& .MuiRadio-root": {
-              color: "#aaa",
-              "&.Mui-checked": {
-                color: "#dc2626",
-              },
-            },
-          }}
-        >
-          <FormControlLabel value="remote" control={<Radio />} label="Remote" />
-          <FormControlLabel value="onsite" control={<Radio />} label="Na lokaciji" />
-          <FormControlLabel value="" control={<Radio />} label="Svi" />
-        </RadioGroup>
-      </FormControl>
     </Box>
   )
 }

@@ -29,7 +29,7 @@ export default function JobDetailPage() {
   const router = useRouter()
   const { id } = router.query
   const { user, loading: userLoading } = useUser()
-  const { showError } = useNotification()
+  const { showError, showSuccess } = useNotification()
 
   const [loading, setLoading] = useState(true)
   const [job, setJob] = useState(null)

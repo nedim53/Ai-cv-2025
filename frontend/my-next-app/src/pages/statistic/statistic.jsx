@@ -80,6 +80,8 @@ export default function Statistic() {
   const handleEditSubmit = async () => {
     const { id, title, company, description, info, task, city, note, email, telephone, date, cv, experience } = editJob
 
+    console.log("Editing job:", { id, realUserId, userId: user?.id })
+
     const { error } = await supabase
       .from("jobs")
       .update({
@@ -97,15 +99,15 @@ export default function Statistic() {
         experience,
       })
       .eq("id", id)
-      .eq("user_id", realUserId || user.id)
 
     if (error) {
       console.error("UPDATE ERROR:", error)
-      setSnackbar({ open: true, message: "Greška pri uređivanju.", severity: "error" })
+      setSnackbar({ open: true, message: `Greška pri uređivanju: ${error.message}`, severity: "error" })
     } else {
       setSnackbar({ open: true, message: "Uspješno uređeno!", severity: "success" })
       setEditDialogOpen(false)
-      location.reload()
+      // Refresh data instead of full page reload
+      window.location.reload()
     }
   }
 
@@ -113,17 +115,19 @@ export default function Statistic() {
     const confirmed = confirm("Da li si siguran da želiš obrisati oglas?")
     if (!confirmed) return
 
+    console.log("Deleting job:", { jobId, realUserId, userId: user?.id })
+
     const { error } = await supabase
       .from("jobs")
       .delete()
       .eq("id", jobId)
-      .eq("user_id", realUserId || user.id)
 
     if (error) {
-      setSnackbar({ open: true, message: "Greška pri brisanju.", severity: "error" })
+      console.error("DELETE ERROR:", error)
+      setSnackbar({ open: true, message: `Greška pri brisanju: ${error.message}`, severity: "error" })
     } else {
       setSnackbar({ open: true, message: "Oglas obrisan.", severity: "success" })
-      location.reload()
+      window.location.reload()
     }
   }
 
@@ -347,7 +351,7 @@ export default function Statistic() {
               </Typography>
             </Box>
           ) : (
-            <Grid container spacing={3}>
+            <Box sx={{ maxWidth: "1400px", mx: "auto" }}>
               {[...jobStats]
                 .sort((a, b) => {
                   switch (sortBy) {
@@ -359,131 +363,205 @@ export default function Statistic() {
                   }
                 })
                 .map((job, index) => (
-                  <Grid item xs={12} md={6} lg={4} key={index}>
-                    <Card sx={{
+                  <Paper 
+                    key={index}
+                    sx={{
                       background: "rgba(31, 31, 31, 0.8)",
                       backdropFilter: "blur(10px)",
                       border: "1px solid rgba(229, 9, 20, 0.3)",
                       borderRadius: 3,
                       boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
                       transition: "all 0.3s ease",
-                      height: "500px",
-                      display: "flex",
-                      flexDirection: "column",
+                      mb: 4,
+                      cursor: "pointer",
                       "&:hover": {
-                        transform: "translateY(-4px)",
+                        transform: "translateY(-2px)",
                         boxShadow: "0 12px 40px rgba(229, 9, 20, 0.4)",
+                        border: "1px solid rgba(229, 9, 20, 0.6)",
                       },
-                    }}>
-                      <CardContent sx={{ p: 4, flexGrow: 1, display: "flex", flexDirection: "column" }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
-                          <Box>
-                            <Typography variant="h5" sx={{ color: "#e50914", fontWeight: "600", mb: 1 }}>
-                              📌 {job.title}
-                            </Typography>
-                            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-                              <Chip 
-                                icon={<Business />} 
-                                label={job.company} 
-                                sx={{ 
-                                  bgcolor: "rgba(0, 230, 184, 0.1)", 
-                                  color: "#00e6b8",
-                                  border: "1px solid rgba(0, 230, 184, 0.3)"
-                                }} 
-                              />
-                              <Chip 
-                                icon={<LocationOn />} 
-                                label={job.city} 
-                                sx={{ 
-                                  bgcolor: "rgba(245, 158, 11, 0.1)", 
-                                  color: "#f59e0b",
-                                  border: "1px solid rgba(245, 158, 11, 0.3)"
-                                }} 
-                              />
-                            </Box>
-                          </Box>
-                          <Box sx={{ display: "flex", gap: 1 }}>
-                            <IconButton 
-                              onClick={() => handleEditClick(job)}
-                              sx={{ color: "#00e6b8" }}
-                            >
-                              <Edit />
-                            </IconButton>
-                            <IconButton 
-                              onClick={() => handleDeleteJob(job.id)}
-                              sx={{ color: "#ff4444" }}
-                            >
-                              <Delete />
-                            </IconButton>
-                            <Link href={`/statistic/${job.id}`}>
-                              <IconButton sx={{ color: "#e50914" }}>
-                                <Visibility />
-                              </IconButton>
-                            </Link>
+                    }}
+                    onClick={() => window.location.href = `/statistic/${job.id}`}
+                  >
+                    <Box sx={{ p: 4 }}>
+                      {/* Header */}
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="h4" sx={{ color: "#e50914", fontWeight: "700", mb: 2 }}>
+                            📌 {job.title}
+                          </Typography>
+                          <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+                            <Chip 
+                              icon={<Business />} 
+                              label={job.company} 
+                              sx={{ 
+                                bgcolor: "rgba(0, 230, 184, 0.1)", 
+                                color: "#00e6b8",
+                                border: "1px solid rgba(0, 230, 184, 0.3)",
+                                fontSize: "1rem",
+                                height: "32px"
+                              }} 
+                            />
+                            <Chip 
+                              icon={<LocationOn />} 
+                              label={job.city} 
+                              sx={{ 
+                                bgcolor: "rgba(245, 158, 11, 0.1)", 
+                                color: "#f59e0b",
+                                border: "1px solid rgba(245, 158, 11, 0.3)",
+                                fontSize: "1rem",
+                                height: "32px"
+                              }} 
+                            />
+                            <Chip 
+                              icon={<CalendarToday />} 
+                              label={`Ističe: ${new Date(job.date).toLocaleDateString()}`} 
+                              sx={{ 
+                                bgcolor: "rgba(239, 68, 68, 0.1)", 
+                                color: "#ef4444",
+                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                fontSize: "1rem",
+                                height: "32px"
+                              }} 
+                            />
                           </Box>
                         </Box>
+                        
+                        {/* Action Buttons */}
+                        <Box sx={{ display: "flex", gap: 1, ml: 2 }}>
+                          <IconButton 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(job);
+                            }}
+                            sx={{ 
+                              color: "#00e6b8",
+                              bgcolor: "rgba(0, 230, 184, 0.1)",
+                              "&:hover": { bgcolor: "rgba(0, 230, 184, 0.2)" }
+                            }}
+                          >
+                            <Edit />
+                          </IconButton>
+                          <IconButton 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteJob(job.id);
+                            }}
+                            sx={{ 
+                              color: "#ff4444",
+                              bgcolor: "rgba(239, 68, 68, 0.1)",
+                              "&:hover": { bgcolor: "rgba(239, 68, 68, 0.2)" }
+                            }}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </Box>
+                      </Box>
 
-                        <Box sx={{ 
-                          p: 3, 
-                          background: "rgba(0, 230, 184, 0.05)", 
-                          borderRadius: 2, 
-                          border: "1px solid rgba(0, 230, 184, 0.2)",
-                          mb: 3
-                        }}>
-                          <Typography sx={{ color: "#00e6b8", fontWeight: "600", mb: 1 }}>
-                            📊 Ukupan broj prijava: {job.applications.length}
+                      {/* Stats Row */}
+                      <Box sx={{ 
+                        display: "flex", 
+                        gap: 4, 
+                        mb: 3,
+                        p: 3, 
+                        background: "rgba(0, 230, 184, 0.05)", 
+                        borderRadius: 2, 
+                        border: "1px solid rgba(0, 230, 184, 0.2)"
+                      }}>
+                        <Box sx={{ textAlign: "center" }}>
+                          <Typography variant="h3" sx={{ color: "#00e6b8", fontWeight: "700", mb: 1 }}>
+                            {job.applications.length}
                           </Typography>
                           <Typography sx={{ color: "#aaa", fontSize: "0.9rem" }}>
-                            Poslednja prijava: {job.applications.length > 0 
-                              ? new Date(Math.max(...job.applications.map(app => new Date(app.created_at)))).toLocaleDateString()
-                              : "Nema prijava"
-                            }
+                            Ukupno prijava
                           </Typography>
                         </Box>
+                        <Box sx={{ textAlign: "center" }}>
+                          <Typography variant="h3" sx={{ color: "#f59e0b", fontWeight: "700", mb: 1 }}>
+                            {job.applications.length > 0 
+                              ? Math.round(job.applications.reduce((sum, app) => sum + app.score, 0) / job.applications.length * 10) / 10
+                              : 0
+                            }
+                          </Typography>
+                          <Typography sx={{ color: "#aaa", fontSize: "0.9rem" }}>
+                            Prosječna ocjena
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: "center" }}>
+                          <Typography variant="h3" sx={{ color: "#ef4444", fontWeight: "700", mb: 1 }}>
+                            {job.applications.length > 0 
+                              ? Math.max(...job.applications.map(app => app.score))
+                              : 0
+                            }
+                          </Typography>
+                          <Typography sx={{ color: "#aaa", fontSize: "0.9rem" }}>
+                            Najbolja ocjena
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: "center" }}>
+                          <Typography variant="h3" sx={{ color: "#8b5cf6", fontWeight: "700", mb: 1 }}>
+                            {job.applications.length > 0 
+                              ? new Date(Math.max(...job.applications.map(app => new Date(app.created_at)))).toLocaleDateString()
+                              : "N/A"
+                            }
+                          </Typography>
+                          <Typography sx={{ color: "#aaa", fontSize: "0.9rem" }}>
+                            Poslednja prijava
+                          </Typography>
+                        </Box>
+                      </Box>
 
-                        {job.applications.length > 0 && (
-                          <Box sx={{ flexGrow: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                            <Typography variant="h6" sx={{ color: "#fff", mb: 2, fontWeight: "600" }}>
-                              👥 Aplikacije ({job.applications.length})
-                            </Typography>
-                            <Box sx={{ flexGrow: 1, overflow: "auto", maxHeight: "200px" }}>
-                              <Grid container spacing={2}>
-                                {job.applications.map((app, i) => (
-                                  <Grid item xs={12} key={i}>
-                                  <Paper sx={{
+                      {/* Recent Applications Preview */}
+                      {job.applications.length > 0 && (
+                        <Box>
+                          <Typography variant="h6" sx={{ color: "#fff", mb: 2, fontWeight: "600" }}>
+                            👥 Poslednje prijave ({Math.min(3, job.applications.length)} od {job.applications.length})
+                          </Typography>
+                          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                            {job.applications
+                              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                              .slice(0, 3)
+                              .map((app, i) => (
+                                <Paper 
+                                  key={i}
+                                  sx={{
                                     p: 2,
                                     background: "rgba(42, 42, 42, 0.6)",
                                     border: "1px solid rgba(255, 255, 255, 0.1)",
                                     borderRadius: 2,
-                                  }}>
-                                    <Typography variant="subtitle1" sx={{ color: "#fff", fontWeight: "500", mb: 1 }}>
-                                      👤 {app.user.name} {app.user.surname}
-                                    </Typography>
-                                    <Chip 
-                                      label={`Ocjena: ${app.score}`} 
-                                      size="small" 
-                                      sx={{ 
-                                        bgcolor: app.score >= 7 ? "rgba(34, 197, 94, 0.2)" : app.score >= 5 ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
-                                        color: app.score >= 7 ? "#22c55e" : app.score >= 5 ? "#f59e0b" : "#ef4444",
-                                        border: `1px solid ${app.score >= 7 ? "rgba(34, 197, 94, 0.3)" : app.score >= 5 ? "rgba(245, 158, 11, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
-                                        mb: 1
-                                      }} 
-                                    />
-                                    <Typography variant="caption" sx={{ color: "#888", display: "block" }}>
-                                      🕒 {new Date(app.created_at).toLocaleString()}
-                                    </Typography>
-                                  </Paper>
-                                </Grid>
+                                    minWidth: "200px",
+                                    flex: "1 1 200px"
+                                  }}
+                                >
+                                  <Typography variant="subtitle1" sx={{ color: "#fff", fontWeight: "500", mb: 1 }}>
+                                    👤 {app.user.name} {app.user.surname}
+                                  </Typography>
+                                  <Chip 
+                                    label={`Ocjena: ${app.score}/10`} 
+                                    size="small" 
+                                    sx={{ 
+                                      bgcolor: app.score >= 7 ? "rgba(34, 197, 94, 0.2)" : app.score >= 5 ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
+                                      color: app.score >= 7 ? "#22c55e" : app.score >= 5 ? "#f59e0b" : "#ef4444",
+                                      border: `1px solid ${app.score >= 7 ? "rgba(34, 197, 94, 0.3)" : app.score >= 5 ? "rgba(245, 158, 11, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
+                                      mb: 1
+                                    }} 
+                                  />
+                                  <Typography variant="caption" sx={{ color: "#888", display: "block" }}>
+                                    🕒 {new Date(app.created_at).toLocaleString()}
+                                  </Typography>
+                                </Paper>
                               ))}
-                              </Grid>
-                            </Box>
                           </Box>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grid>
+                          {job.applications.length > 3 && (
+                            <Typography sx={{ color: "#00e6b8", mt: 2, textAlign: "center", fontWeight: "500" }}>
+                              Klikni za pregled svih {job.applications.length} prijava →
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
+                  </Paper>
                 ))}
-            </Grid>
+            </Box>
           )
         ) : jobStats.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 8 }}>

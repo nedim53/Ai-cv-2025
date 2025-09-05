@@ -367,7 +367,7 @@ export default function Statistic() {
                       borderRadius: 3,
                       boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
                       transition: "all 0.3s ease",
-                      height: "100%",
+                      height: "500px",
                       display: "flex",
                       flexDirection: "column",
                       "&:hover": {
@@ -442,13 +442,14 @@ export default function Statistic() {
                         </Box>
 
                         {job.applications.length > 0 && (
-                          <Box sx={{ flexGrow: 1 }}>
+                          <Box sx={{ flexGrow: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                             <Typography variant="h6" sx={{ color: "#fff", mb: 2, fontWeight: "600" }}>
-                              👥 Aplikacije
+                              👥 Aplikacije ({job.applications.length})
                             </Typography>
-                            <Grid container spacing={2}>
-                              {job.applications.map((app, i) => (
-                                <Grid item xs={12} sm={6} md={4} key={i}>
+                            <Box sx={{ flexGrow: 1, overflow: "auto", maxHeight: "200px" }}>
+                              <Grid container spacing={2}>
+                                {job.applications.map((app, i) => (
+                                  <Grid item xs={12} key={i}>
                                   <Paper sx={{
                                     p: 2,
                                     background: "rgba(42, 42, 42, 0.6)",
@@ -474,7 +475,8 @@ export default function Statistic() {
                                   </Paper>
                                 </Grid>
                               ))}
-                            </Grid>
+                              </Grid>
+                            </Box>
                           </Box>
                         )}
                       </CardContent>

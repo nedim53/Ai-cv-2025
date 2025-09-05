@@ -1,4 +1,15 @@
 
+Za testiranje aplikacije, hr korisnik
+email: nedim.zec@gmail.com
+pw: 123456
+
+User
+email: zec.nedim13@gmail.com
+pw: 123456
+
+Za registraciju unijeti pravi email, da bi se autentifikacija potvrdila preko istog.
+
+
 ## 🔧 Instalacija i Pokretanje
 
 ### Backend Setup

@@ -1,97 +1,75 @@
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import { supabase } from "@/lib/supabaseClient";
-import {
-  Box,
-  Typography,
-  Paper,
-  Input,
-  Button,
-  CircularProgress,
-} from "@mui/material";
-import Navbar from "@/components/navbar";
-import useUser from "@/lib/useUser";
-import MarkdownViewer from "@/components/MarkdownViewer";
+"use client"
 
+import { useState, useEffect } from "react"
+import { useRouter } from "next/router"
+import { supabase } from "@/lib/supabaseClient"
+import { Box, Typography, Paper, Button, CircularProgress } from "@mui/material"
+import Navbar from "@/components/navbar"
+import useUser from "@/lib/useUser"
+import MarkdownViewer from "@/components/MarkdownViewer"
 
 export default function JobDescription() {
-  const router = useRouter();
-  const { id } = router.query;
-  const { user, loading: userLoading } = useUser();
-  const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [aiResult, setAiResult] = useState("");
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+  const router = useRouter()
+  const { id } = router.query
+  const { user, loading: userLoading } = useUser()
+  const [job, setJob] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [aiResult, setAiResult] = useState("")
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE
   useEffect(() => {
-    if (!id) return;
+    if (!id) return
 
     const fetchJob = async () => {
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data, error } = await supabase.from("jobs").select("*").eq("id", id).single()
 
-      if (!error) setJob(data);
-      setLoading(false);
-    };
+      if (!error) setJob(data)
+      setLoading(false)
+    }
 
-    fetchJob();
-  }, [id]);
+    fetchJob()
+  }, [id])
 
   useEffect(() => {
-  if (!userLoading && user?.id && id) {
-    const fetchExistingAnalysis = async () => {
-      const res = await fetch(
-        `${API_BASE}/get-existing-analysis/${user.id}/${id}`
-      );
-      const result = await res.json();
-      if (result?.analysis) {
-        setAiResult(result.analysis);
-      } else {
-        setAiResult("");
+    if (!userLoading && user?.id && id) {
+      const fetchExistingAnalysis = async () => {
+        const res = await fetch(`${API_BASE}/get-existing-analysis/${user.id}/${id}`)
+        const result = await res.json()
+        if (result?.analysis) {
+          setAiResult(result.analysis)
+        } else {
+          setAiResult("")
+        }
       }
-    };
 
-    fetchExistingAnalysis();
-  }
-}, [userLoading, user?.id, id]);
-
-
-
-const handleAnalyze = async () => {
-  if (!user || !job) return;
-
-  const res = await fetch(
-    `${API_BASE}/analyze-cv/${user.id}/${job.id}`,
-    { method: "POST" }
-  );
-
-  const data = await res.json();
-  const analysisId = data.analysis_id;
-
-  const interval = setInterval(async () => {
-    const check = await fetch(
-      `${API_BASE}/get-analysis/${analysisId}`
-    );
-    const result = await check.json();
-
-    if (result.analysis) {
-      setAiResult(result.analysis);
-      clearInterval(interval);
+      fetchExistingAnalysis()
     }
-  }, 10000);
-};
+  }, [userLoading, user?.id, id])
 
+  const handleAnalyze = async () => {
+    if (!user || !job) return
 
+    const res = await fetch(`${API_BASE}/analyze-cv/${user.id}/${job.id}`, { method: "POST" })
 
+    const data = await res.json()
+    const analysisId = data.analysis_id
+
+    const interval = setInterval(async () => {
+      const check = await fetch(`${API_BASE}/get-analysis/${analysisId}`)
+      const result = await check.json()
+
+      if (result.analysis) {
+        setAiResult(result.analysis)
+        clearInterval(interval)
+      }
+    }, 10000)
+  }
 
   if (loading || !job) {
     return (
       <Box sx={{ p: 4, bgcolor: "#000", minHeight: "100vh", color: "#fff" }}>
         <CircularProgress sx={{ color: "#e50914" }} />
       </Box>
-    );
+    )
   }
 
   return (
@@ -164,7 +142,6 @@ const handleAnalyze = async () => {
           <Typography variant="h6" sx={{ mb: 2, color: "#ff4d4d" }}>
             📎 Pošalji svoj CV za AI analizu
           </Typography>
-          
 
           <Button
             variant="contained"
@@ -183,8 +160,6 @@ const handleAnalyze = async () => {
             🚀 Pošalji i analiziraj
           </Button>
 
-
-
           {aiResult && (
             <>
               <Typography variant="h6" sx={{ mb: 1, color: "#ff4d4d" }}>
@@ -199,12 +174,12 @@ const handleAnalyze = async () => {
                   color: "#ddd",
                 }}
               >
-      <MarkdownViewer markdown={aiResult} />
+                <MarkdownViewer markdown={aiResult} />
               </Paper>
             </>
           )}
         </Paper>
       </Box>
     </>
-  );
+  )
 }

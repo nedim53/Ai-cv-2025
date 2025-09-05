@@ -23,13 +23,20 @@ import { supabase } from "@/lib/supabaseClient"
 import Navbar from "@/components/navbar"
 import MarkdownViewer from "@/components/MarkdownViewer"
 import useUser from "@/lib/useUser"
-import { useNotification } from "@/components/NotificationProvider"
 
 export default function JobDetailPage() {
   const router = useRouter()
   const { id } = router.query
   const { user, loading: userLoading } = useUser()
-  const { showError, showSuccess } = useNotification()
+  // Simple notification functions
+  const showError = (message) => {
+    console.error(message)
+    alert(`❌ ${message}`)
+  }
+  const showSuccess = (message) => {
+    console.log(message)
+    alert(`✅ ${message}`)
+  }
 
   const [loading, setLoading] = useState(true)
   const [job, setJob] = useState(null)

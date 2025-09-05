@@ -13,13 +13,24 @@ import {
 import Navbar from "@/components/navbar"
 import useUser from "@/lib/useUser"
 import MarkdownViewer from "@/components/MarkdownViewer"
-import { useNotification } from "@/components/NotificationProvider"
 
 export default function JobDescription() {
   const router = useRouter()
   const { id } = router.query
   const { user, loading: userLoading } = useUser()
-  const { showSuccess, showError, showInfo } = useNotification()
+  // Simple notification functions
+  const showError = (message) => {
+    console.error(message)
+    alert(`❌ ${message}`)
+  }
+  const showSuccess = (message) => {
+    console.log(message)
+    alert(`✅ ${message}`)
+  }
+  const showInfo = (message) => {
+    console.log(message)
+    alert(`ℹ️ ${message}`)
+  }
   const [job, setJob] = useState(null)
   const [loading, setLoading] = useState(true)
   const [aiResult, setAiResult] = useState("")

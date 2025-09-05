@@ -8,7 +8,6 @@ import {
   CircularProgress,
   Paper,
   Chip,
-  Snackbar,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -39,11 +38,18 @@ import Navbar from "@/components/navbar"
 import Link from "next/link"
 import useUser from "@/lib/useUser"
 import MarkdownViewer from "@/components/MarkdownViewer"
-import { useNotification } from "@/components/NotificationProvider"
 
 export default function Statistic() {
   const { user, loading: userLoading } = useUser()
-  const { showSuccess, showError } = useNotification()
+  // Simple notification functions
+  const showError = (message) => {
+    console.error(message)
+    alert(`❌ ${message}`)
+  }
+  const showSuccess = (message) => {
+    console.log(message)
+    alert(`✅ ${message}`)
+  }
   const [realUserId, setRealUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [jobStats, setJobStats] = useState([])
@@ -830,13 +836,6 @@ export default function Statistic() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        message={snackbar.message}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      />
     </Box>
   )
 }

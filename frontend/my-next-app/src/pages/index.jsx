@@ -138,7 +138,7 @@ export default function HomePage() {
             Dobrodošli
           </Typography>
 
-          {user?.role === "user" && (
+          {user?.role === "user" ? (
             <>
               <Typography
                 variant="h5"
@@ -261,6 +261,70 @@ export default function HomePage() {
                   </Grid>
                 </Box>
               )}
+            </>
+          ) : (
+            /* Content for non-authenticated users */
+            <>
+              <Typography
+                variant="h5"
+                sx={{
+                  color: "#cccccc",
+                  mb: 4,
+                  fontWeight: 300,
+                  maxWidth: "600px",
+                  mx: "auto",
+                  lineHeight: 1.6,
+                }}
+              >
+                Pregledaj otvorene pozicije i pronađi svoju priliku. Prijavi se da koristiš AI analizu.
+              </Typography>
+
+              <Box sx={{ display: "flex", gap: 2, justifyContent: "center", flexWrap: "wrap" }}>
+                <Link href="/login" style={{ textDecoration: "none" }}>
+                  <Button
+                    variant="outlined"
+                    className="glow-red"
+                    sx={{
+                      color: "#e50914",
+                      borderColor: "#e50914",
+                      fontWeight: "bold",
+                      px: 4,
+                      py: 1.5,
+                      fontSize: "1.1rem",
+                      borderRadius: "12px",
+                      textTransform: "none",
+                      "&:hover": {
+                        borderColor: "#ff1a1a",
+                        bgcolor: "rgba(229, 9, 20, 0.1)"
+                      }
+                    }}
+                  >
+                    🔑 Prijavi se
+                  </Button>
+                </Link>
+                
+                <Link href="/register" style={{ textDecoration: "none" }}>
+                  <Button
+                    variant="contained"
+                    className="glow-red pulse-animation"
+                    sx={{
+                      bgcolor: "#e50914",
+                      color: "#fff",
+                      fontWeight: "bold",
+                      px: 4,
+                      py: 1.5,
+                      fontSize: "1.1rem",
+                      borderRadius: "12px",
+                      textTransform: "none",
+                      "&:hover": {
+                        bgcolor: "#b0060f",
+                      },
+                    }}
+                  >
+                    ✨ Registruj se
+                  </Button>
+                </Link>
+              </Box>
             </>
           )}
         </Box>

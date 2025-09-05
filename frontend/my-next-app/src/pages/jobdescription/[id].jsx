@@ -21,15 +21,12 @@ export default function JobDescription() {
   // Simple notification functions
   const showError = (message) => {
     console.error(message)
-    alert(`❌ ${message}`)
   }
   const showSuccess = (message) => {
     console.log(message)
-    alert(`✅ ${message}`)
   }
   const showInfo = (message) => {
     console.log(message)
-    alert(`ℹ️ ${message}`)
   }
   const [job, setJob] = useState(null)
   const [loading, setLoading] = useState(true)

@@ -31,11 +31,9 @@ export default function JobDetailPage() {
   // Simple notification functions
   const showError = (message) => {
     console.error(message)
-    alert(`❌ ${message}`)
   }
   const showSuccess = (message) => {
     console.log(message)
-    alert(`✅ ${message}`)
   }
 
   const [loading, setLoading] = useState(true)

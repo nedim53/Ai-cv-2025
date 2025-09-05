@@ -6,10 +6,12 @@ import { Box, Typography, CircularProgress, Paper, Chip, Button, Divider } from 
 import { supabase } from "@/lib/supabaseClient"
 import Navbar from "@/components/navbar"
 import MarkdownViewer from "@/components/MarkdownViewer"
+import useUser from "@/lib/useUser"
 
 export default function JobDetailPage() {
   const router = useRouter()
   const { id } = router.query
+  const { user, loading: userLoading } = useUser()
 
   const [loading, setLoading] = useState(true)
   const [job, setJob] = useState(null)
@@ -93,7 +95,7 @@ export default function JobDetailPage() {
 
   return (
     <Box sx={{ bgcolor: "#121212", minHeight: "100vh", color: "#fff" }}>
-      <Navbar />
+      <Navbar user={user} loading={userLoading} />
 
       <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
         <Typography variant="h4" sx={{ color: "#ff1a1a", fontWeight: "bold", mb: 3 }}>

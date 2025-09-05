@@ -137,52 +137,72 @@ export default function HomePage() {
             Dobrodošli
           </Typography>
 
-          {user?.role === "user" ? (
+          {user ? (
             <>
-              <Typography
-                variant="h5"
-                sx={{
-                  color: "#cccccc",
-                  mb: 4,
-                  fontWeight: 300,
-                  maxWidth: "600px",
-                  mx: "auto",
-                  lineHeight: 1.6,
-                }}
-              >
-                Pregledaj otvorene pozicije i pronađi svoju priliku.
-              </Typography>
+              {user.role === "user" ? (
+                <>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      color: "#cccccc",
+                      mb: 4,
+                      fontWeight: 300,
+                      maxWidth: "600px",
+                      mx: "auto",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    Pregledaj otvorene pozicije i pronađi svoju priliku.
+                  </Typography>
 
-              <Button
-                onClick={fetchRecommended}
-                variant="contained"
-                className="glow-red pulse-animation"
-                sx={{
-                  bgcolor: "#e50914",
-                  color: "#fff",
-                  fontWeight: "bold",
-                  mt: 2,
-                  mb: 6,
-                  px: 4,
-                  py: 1.5,
-                  fontSize: "1.1rem",
-                  borderRadius: "12px",
-                  textTransform: "none",
-                  "&:hover": {
-                    bgcolor: "#b0060f",
-                  },
-                }}
-              >
-                🧠 Nađi mi posao
-              </Button>
+                  <Button
+                    onClick={fetchRecommended}
+                    variant="contained"
+                    className="glow-red pulse-animation"
+                    sx={{
+                      bgcolor: "#e50914",
+                      color: "#fff",
+                      fontWeight: "bold",
+                      mt: 2,
+                      mb: 6,
+                      px: 4,
+                      py: 1.5,
+                      fontSize: "1.1rem",
+                      borderRadius: "12px",
+                      textTransform: "none",
+                      "&:hover": {
+                        bgcolor: "#b0060f",
+                      },
+                    }}
+                  >
+                    🧠 Nađi mi posao
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      color: "#cccccc",
+                      mb: 4,
+                      fontWeight: 300,
+                      maxWidth: "600px",
+                      mx: "auto",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    Dobrodošli u HR dashboard. Pregledajte sve otvorene pozicije.
+                  </Typography>
+                </>
+              )}
 
-              {loadingRecommended && (
+              {user.role === "user" && loadingRecommended && (
                 <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
                   <CircularProgress sx={{ color: "#00e6b8" }} size={40} />
                 </Box>
               )}
 
-              {recommendedJobs.length > 0 && (
+              {user.role === "user" && recommendedJobs.length > 0 && (
                 <Box sx={{ mb: 8, px: { xs: 2, sm: 4 } }}>
                   <Typography
                     variant="h4"

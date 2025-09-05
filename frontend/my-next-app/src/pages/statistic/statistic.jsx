@@ -347,7 +347,7 @@ export default function Statistic() {
               </Typography>
             </Box>
           ) : (
-            <Grid container spacing={4}>
+            <Grid container spacing={3}>
               {[...jobStats]
                 .sort((a, b) => {
                   switch (sortBy) {
@@ -359,7 +359,7 @@ export default function Statistic() {
                   }
                 })
                 .map((job, index) => (
-                  <Grid item xs={12} key={index}>
+                  <Grid item xs={12} md={6} lg={4} key={index}>
                     <Card sx={{
                       background: "rgba(31, 31, 31, 0.8)",
                       backdropFilter: "blur(10px)",
@@ -367,12 +367,15 @@ export default function Statistic() {
                       borderRadius: 3,
                       boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
                       transition: "all 0.3s ease",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
                       "&:hover": {
                         transform: "translateY(-4px)",
                         boxShadow: "0 12px 40px rgba(229, 9, 20, 0.4)",
                       },
                     }}>
-                      <CardContent sx={{ p: 4 }}>
+                      <CardContent sx={{ p: 4, flexGrow: 1, display: "flex", flexDirection: "column" }}>
                         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
                           <Box>
                             <Typography variant="h5" sx={{ color: "#e50914", fontWeight: "600", mb: 1 }}>
@@ -439,7 +442,7 @@ export default function Statistic() {
                         </Box>
 
                         {job.applications.length > 0 && (
-                          <Box>
+                          <Box sx={{ flexGrow: 1 }}>
                             <Typography variant="h6" sx={{ color: "#fff", mb: 2, fontWeight: "600" }}>
                               👥 Aplikacije
                             </Typography>

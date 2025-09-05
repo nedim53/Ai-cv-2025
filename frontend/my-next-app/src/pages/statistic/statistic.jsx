@@ -44,11 +44,9 @@ export default function Statistic() {
   // Simple notification functions
   const showError = (message) => {
     console.error(message)
-    alert(`❌ ${message}`)
   }
   const showSuccess = (message) => {
     console.log(message)
-    alert(`✅ ${message}`)
   }
   const [realUserId, setRealUserId] = useState(null)
   const [loading, setLoading] = useState(true)

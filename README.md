@@ -9,6 +9,39 @@ pw: 123456
 
 Za registraciju unijeti pravi email, da bi se autentifikacija potvrdila preko istog.
 
+## 📸 Screenshotovi aplikacije
+
+### Dashboard – Kreiranje konkursa
+![Dashboard](./Slike_projekta/Screenshot%202025-09-05%20222949.png)
+
+### Profil korisnika
+![Profil](./Slike_projekta/Screenshot%202025-09-05%20222505.png)
+
+### CV Upload sekcija
+![CV Upload](./Slike_projekta/Screenshot%202025-09-05%20222553.png)
+
+### Home stranica
+![Home](./Slike_projekta/Screenshot%202025-09-05%20222611.png)
+
+### AI Analiza CV-a (pokretanje)
+![AI analiza 1](./Slike_projekta/Screenshot%202025-09-05%20222657.png)
+
+### Detalji posla + analiza
+![AI analiza 2](./Slike_projekta/Screenshot%202025-09-05%20222714.png)
+
+### AI analiza u toku
+![AI analiza 3](./Slike_projekta/Screenshot%202025-09-05%20222739.png)
+
+### AI preporučeni poslovi
+![Preporuke](./Slike_projekta/Screenshot%202025-09-05%20222829.png)
+
+### Lista preporučenih poslova
+![Preporuke lista](./Slike_projekta/Screenshot%202025-09-05%20222844.png)
+
+### Statistike
+![Statistike](./Slike_projekta/Screenshot%202025-09-05%20222904.png)
+
+
 
 ## 🔧 Instalacija i Pokretanje
 

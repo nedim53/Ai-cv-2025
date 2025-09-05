@@ -74,7 +74,7 @@ export default function JobDescription() {
 
   return (
     <>
-      <Navbar />
+      <Navbar user={user} loading={userLoading} />
       <Box
         sx={{
           background: "radial-gradient(ellipse at center, #1a0000 0%, #0f0f0f 70%)",

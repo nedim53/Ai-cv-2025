@@ -99,10 +99,10 @@ export default function Navbar({ user, loading }) {
           
           {user && (
             <>
-              {user.role === "hr" && (
+              {user.role === "hr" ? (
                 <Link href="/dashboard" style={{ textDecoration: "none" }}>
                   <Button 
-            sx={{
+                    sx={{ 
                       color: "#fff", 
                       fontWeight: 500,
                       "&:hover": { color: "#e50914" }
@@ -111,21 +111,21 @@ export default function Navbar({ user, loading }) {
                     Dashboard
                   </Button>
                 </Link>
+              ) : (
+                <Link href="/findMyJob" style={{ textDecoration: "none" }}>
+                  <Button 
+                    sx={{ 
+                      color: "#fff", 
+                      fontWeight: 500,
+                      "&:hover": { color: "#e50914" }
+                    }}
+                  >
+                    Nađi posao
+                  </Button>
+                </Link>
               )}
               
-              <Link href="/findMyJob" style={{ textDecoration: "none" }}>
-                <Button 
-                  sx={{ 
-                    color: "#fff", 
-                    fontWeight: 500,
-                    "&:hover": { color: "#e50914" }
-                  }}
-                >
-                  Nađi posao
-                </Button>
-              </Link>
-              
-              <Link href="/statistic" style={{ textDecoration: "none" }}>
+              <Link href="/statistic/statistic" style={{ textDecoration: "none" }}>
                 <Button 
                   sx={{ 
                     color: "#fff", 
@@ -229,7 +229,7 @@ export default function Navbar({ user, loading }) {
                   }}
                 >
                   <TrendingUp sx={{ mr: 1, fontSize: "1.2rem" }} />
-                  <Link href="/statistic" style={{ textDecoration: "none", color: "inherit" }}>
+                  <Link href="/statistic/statistic" style={{ textDecoration: "none", color: "inherit" }}>
                     Statistike
                   </Link>
                 </MenuItem>

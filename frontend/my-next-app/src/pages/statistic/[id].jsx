@@ -1,52 +1,38 @@
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Paper,
-  Chip,
-  Button,
-  Divider,
-  Link as MuiLink,
-} from "@mui/material";
-import { supabase } from "@/lib/supabaseClient";
-import Navbar from "@/components/navbar";
-import MarkdownViewer from "@/components/MarkdownViewer";
+"use client"
+
+import { useRouter } from "next/router"
+import { useEffect, useState } from "react"
+import { Box, Typography, CircularProgress, Paper, Chip, Button, Divider } from "@mui/material"
+import { supabase } from "@/lib/supabaseClient"
+import Navbar from "@/components/navbar"
+import MarkdownViewer from "@/components/MarkdownViewer"
 
 export default function JobDetailPage() {
-  const router = useRouter();
-  const { id } = router.query;
+  const router = useRouter()
+  const { id } = router.query
 
-  const [loading, setLoading] = useState(true);
-  const [job, setJob] = useState(null);
-  const [applications, setApplications] = useState([]);
-  const [sortBy, setSortBy] = useState("latest");
+  const [loading, setLoading] = useState(true)
+  const [job, setJob] = useState(null)
+  const [applications, setApplications] = useState([])
+  const [sortBy, setSortBy] = useState("latest")
 
   useEffect(() => {
-    if (!router.isReady || !id) return;
+    if (!router.isReady || !id) return
 
     const fetchData = async () => {
-      setLoading(true);
+      setLoading(true)
 
-      const { data: jobData, error: jobError } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data: jobData, error: jobError } = await supabase.from("jobs").select("*").eq("id", id).maybeSingle()
 
       if (jobError || !jobData) {
-        setJob(null);
-        setLoading(false);
-        return;
+        setJob(null)
+        setLoading(false)
+        return
       }
 
-      setJob(jobData);
+      setJob(jobData)
 
-      const { data: appData } = await supabase
-        .from("application_analysis")
-        .select("*")
-        .eq("job_id", id);
+      const { data: appData } = await supabase.from("application_analysis").select("*").eq("job_id", id)
 
       const enrichedApps = await Promise.all(
         (appData || []).map(async (app) => {
@@ -54,48 +40,45 @@ export default function JobDetailPage() {
             .from("users")
             .select("name, surname, email, telephone, cv_url")
             .eq("id", app.user_id)
-            .maybeSingle();
+            .maybeSingle()
 
           return {
             ...app,
             user: userData || { name: "Nepoznat", surname: "" },
-          };
-        })
-      );
+          }
+        }),
+      )
 
-      setApplications(enrichedApps);
-      setLoading(false);
-    };
+      setApplications(enrichedApps)
+      setLoading(false)
+    }
 
-    fetchData();
-  }, [id, router]);
+    fetchData()
+  }, [id, router])
 
- const handleCVDownload = async (cvPath) => {
-  const { data, error } = await supabase.storage
-    .from("user-uploads")
-    .download(cvPath); 
+  const handleCVDownload = async (cvPath) => {
+    const { data, error } = await supabase.storage.from("user-uploads").download(cvPath)
 
-  if (error || !data) {
-    console.error("Greška pri downloadu:", error);
-    alert("Greška pri preuzimanju CV-a.");
-    return;
+    if (error || !data) {
+      console.error("Greška pri downloadu:", error)
+      alert("Greška pri preuzimanju CV-a.")
+      return
+    }
+
+    const url = URL.createObjectURL(data)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = cvPath.split("/").pop()
+    a.click()
+    URL.revokeObjectURL(url)
   }
-
-  const url = URL.createObjectURL(data);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = cvPath.split("/").pop(); 
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
 
   if (loading) {
     return (
       <Box sx={{ p: 4, color: "#fff", minHeight: "100vh", bgcolor: "#121212" }}>
         <CircularProgress sx={{ color: "#ff1a1a" }} />
       </Box>
-    );
+    )
   }
 
   if (!job) {
@@ -105,7 +88,7 @@ export default function JobDetailPage() {
           ❌ Konkurs nije pronađen.
         </Typography>
       </Box>
-    );
+    )
   }
 
   return (
@@ -113,10 +96,7 @@ export default function JobDetailPage() {
       <Navbar />
 
       <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
-        <Typography
-          variant="h4"
-          sx={{ color: "#ff1a1a", fontWeight: "bold", mb: 3 }}
-        >
+        <Typography variant="h4" sx={{ color: "#ff1a1a", fontWeight: "bold", mb: 3 }}>
           📄 Detalji konkursa
         </Typography>
 
@@ -143,9 +123,7 @@ export default function JobDetailPage() {
           <GridField label="Kontakt Telefon" value={job.telephone} />
           <GridField
             label="Potrebno"
-            value={`CV: ${job.cv ? "Da" : "Ne"}, Iskustvo: ${
-              job.experience ? "Da" : "Ne"
-            }`}
+            value={`CV: ${job.cv ? "Da" : "Ne"}, Iskustvo: ${job.experience ? "Da" : "Ne"}`}
           />
         </Paper>
 
@@ -172,22 +150,20 @@ export default function JobDetailPage() {
         </Typography>
 
         {applications.length === 0 ? (
-          <Typography sx={{ color: "#aaa" }}>
-            Nema prijava za ovaj konkurs.
-          </Typography>
+          <Typography sx={{ color: "#aaa" }}>Nema prijava za ovaj konkurs.</Typography>
         ) : (
           [...applications]
             .sort((a, b) => {
               switch (sortBy) {
                 case "score_desc":
-                  return b.score - a.score;
+                  return b.score - a.score
                 case "score_asc":
-                  return a.score - b.score;
+                  return a.score - b.score
                 case "oldest":
-                  return new Date(a.created_at) - new Date(b.created_at);
+                  return new Date(a.created_at) - new Date(b.created_at)
                 case "latest":
                 default:
-                  return new Date(b.created_at) - new Date(a.created_at);
+                  return new Date(b.created_at) - new Date(a.created_at)
               }
             })
             .map((app, idx) => (
@@ -202,18 +178,11 @@ export default function JobDetailPage() {
                   borderLeft: "5px solid #ff4d4d",
                 }}
               >
-                <Typography
-                  variant="subtitle1"
-                  sx={{ color: "#ffcccc", mb: 1 }}
-                >
+                <Typography variant="subtitle1" sx={{ color: "#ffcccc", mb: 1 }}>
                   👤 {app.user.name} {app.user.surname}
                 </Typography>
-                <Typography sx={{ color: "#bbb" }}>
-                  Email: {app.user.email}
-                </Typography>
-                <Typography sx={{ color: "#bbb" }}>
-                  Telefon: {app.user.telephone}
-                </Typography>
+                <Typography sx={{ color: "#bbb" }}>Email: {app.user.email}</Typography>
+                <Typography sx={{ color: "#bbb" }}>Telefon: {app.user.telephone}</Typography>
                 {app.user.cv_url && (
                   <Typography sx={{ color: "#bbb", mt: 1 }}>
                     <Button
@@ -227,20 +196,13 @@ export default function JobDetailPage() {
                   </Typography>
                 )}
 
-                <Chip
-                  label={`Ocjena: ${app.score}`}
-                  sx={{ bgcolor: "#ff1a1a", color: "#fff", mt: 2 }}
-                />
+                <Chip label={`Ocjena: ${app.score}`} sx={{ bgcolor: "#ff1a1a", color: "#fff", mt: 2 }} />
 
                 <Divider sx={{ my: 2, borderColor: "#333" }} />
 
                 <MarkdownViewer markdown={app.analysis} />
 
-
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#888", mt: 1, display: "block" }}
-                >
+                <Typography variant="caption" sx={{ color: "#888", mt: 1, display: "block" }}>
                   🕒 Prijavljeno: {new Date(app.created_at).toLocaleString()}
                 </Typography>
               </Paper>
@@ -248,7 +210,7 @@ export default function JobDetailPage() {
         )}
       </Box>
     </Box>
-  );
+  )
 }
 
 const GridField = ({ label, value }) => (
@@ -258,4 +220,4 @@ const GridField = ({ label, value }) => (
     </Typography>
     <Typography sx={{ color: "#fff" }}>{value}</Typography>
   </Box>
-);
+)

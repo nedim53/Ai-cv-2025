@@ -12,36 +12,35 @@ Za registraciju unijeti pravi email, da bi se autentifikacija potvrdila preko is
 ## 📸 Screenshotovi aplikacije
 
 ### Dashboard – Kreiranje konkursa
-![Dashboard](./Screenshot%202025-09-05%20222949.png)
+![Dashboard](./Slike_projekta/Screenshot%202025-09-05%20222949.png)
 
 ### Profil korisnika
-![Profil](./Screenshot%202025-09-05%20222505.png)
+![Profil](./Slike_projekta/Screenshot%202025-09-05%20222505.png)
 
 ### CV Upload sekcija
-![CV Upload](./Screenshot%202025-09-05%20222553.png)
+![CV Upload](./Slike_projekta/Screenshot%202025-09-05%20222553.png)
 
 ### Home stranica
-![Home](./Screenshot%202025-09-05%20222611.png)
+![Home](./Slike_projekta/Screenshot%202025-09-05%20222611.png)
 
 ### AI Analiza CV-a (pokretanje)
-![AI analiza 1](./Screenshot%202025-09-05%20222657.png)
+![AI analiza 1](./Slike_projekta/Screenshot%202025-09-05%20222657.png)
 
 ### Detalji posla + analiza
-![AI analiza 2](./Screenshot%202025-09-05%20222714.png)
+![AI analiza 2](./Slike_projekta/Screenshot%202025-09-05%20222714.png)
 
 ### AI analiza u toku
-![AI analiza 3](./Screenshot%202025-09-05%20222739.png)
+![AI analiza 3](./Slike_projekta/Screenshot%202025-09-05%20222739.png)
 
 ### AI preporučeni poslovi
-![Preporuke](./Screenshot%202025-09-05%20222829.png)
+![Preporuke](./Slike_projekta/Screenshot%202025-09-05%20222829.png)
 
 ### Lista preporučenih poslova
-![Preporuke lista](./Screenshot%202025-09-05%20222844.png)
+![Preporuke lista](./Slike_projekta/Screenshot%202025-09-05%20222844.png)
 
 ### Statistike
-![Statistike](./Screenshot%202025-09-05%20222904.png)
+![Statistike](./Slike_projekta/Screenshot%202025-09-05%20222904.png)
 
----
 
 
 ## 🔧 Instalacija i Pokretanje

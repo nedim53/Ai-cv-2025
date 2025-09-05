@@ -6,13 +6,17 @@ import { Box, Typography, CircularProgress, Avatar, Divider, Button, TextField, 
 import useUser from "@/lib/useUser"
 import { supabase } from "@/lib/supabaseClient"
 import { AccountCircle } from "@mui/icons-material"
+import { useNotification } from "@/components/NotificationProvider"
+import LoadingSpinner from "@/components/LoadingSpinner"
 
 export default function Profil() {
   const { user, loading } = useUser()
+  const { showSuccess, showError } = useNotification()
   const [editMode, setEditMode] = useState(false)
   const [formData, setFormData] = useState({})
   const [cvFile, setCvFile] = useState(null)
   const [uploadedPath, setUploadedPath] = useState("")
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   React.useEffect(() => {
     if (user) {
@@ -24,6 +28,7 @@ export default function Profil() {
   const handleCvUpload = async () => {
     if (!cvFile || !user) return
 
+    setIsAnalyzing(true)
     const formData = new FormData()
     formData.append("user_id", user.id)
     formData.append("file", cvFile)
@@ -37,21 +42,23 @@ export default function Profil() {
       const data = await res.json()
 
       if (!res.ok) {
-        alert("Greška: " + (data.detail || "Neuspješan upload."))
+        showError("Greška: " + (data.detail || "Neuspješan upload."))
         return
       }
 
       setUploadedPath(data.cv_url)
-      alert("✅ CV uspješno uploadovan i analiziran!")
+      showSuccess("✅ CV uspješno uploadovan i analiziran!")
     } catch (err) {
       console.error("❌ Upload greška:", err)
-      alert("Greška pri slanju fajla.")
+      showError("Greška pri slanju fajla.")
+    } finally {
+      setIsAnalyzing(false)
     }
   }
 
   const handleCvDownload = async () => {
     if (!uploadedPath) {
-      alert("CV nije dostupan.")
+      showError("CV nije dostupan.")
       return
     }
 
@@ -59,7 +66,7 @@ export default function Profil() {
 
     if (error) {
       console.error("Greška pri downloadu:", error.message)
-      alert("Greška pri preuzimanju CV-a: " + error.message)
+      showError("Greška pri preuzimanju CV-a: " + error.message)
       return
     }
 
@@ -87,10 +94,10 @@ export default function Profil() {
     const { error } = await supabase.from("users").update({ name, surname, telephone }).eq("id", user.id)
 
     if (!error) {
-      alert("Podaci ažurirani.")
+      showSuccess("Podaci ažurirani.")
       setEditMode(false)
     } else {
-      alert("Greška pri ažuriranju: " + error.message)
+      showError("Greška pri ažuriranju: " + error.message)
     }
   }
 
@@ -115,6 +122,7 @@ export default function Profil() {
       }}
     >
       <Navbar user={user} loading={loading} />
+      <LoadingSpinner loading={isAnalyzing} message="Analiziram CV..." />
       <Box sx={{ px: 3, py: 6, display: "flex", justifyContent: "center" }}>
         {loading ? (
           <CircularProgress sx={{ color: "#ff1a1a", mt: 8 }} />

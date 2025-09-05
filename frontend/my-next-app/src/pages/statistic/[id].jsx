@@ -2,16 +2,34 @@
 
 import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
-import { Box, Typography, CircularProgress, Paper, Chip, Button, Divider } from "@mui/material"
+import { Box, Typography, CircularProgress, Paper, Chip, Button, Divider, Card, CardContent, CardActions, Grid, Avatar, LinearProgress, IconButton, Tooltip, Badge, Fade, Zoom } from "@mui/material"
+import { 
+  Download, 
+  Person, 
+  Email, 
+  Phone, 
+  CalendarToday, 
+  Work, 
+  LocationOn, 
+  Star,
+  TrendingUp,
+  Assessment,
+  Visibility,
+  CheckCircle,
+  Cancel,
+  Schedule
+} from "@mui/icons-material"
 import { supabase } from "@/lib/supabaseClient"
 import Navbar from "@/components/navbar"
 import MarkdownViewer from "@/components/MarkdownViewer"
 import useUser from "@/lib/useUser"
+import { useNotification } from "@/components/NotificationProvider"
 
 export default function JobDetailPage() {
   const router = useRouter()
   const { id } = router.query
   const { user, loading: userLoading } = useUser()
+  const { showError } = useNotification()
 
   const [loading, setLoading] = useState(true)
   const [job, setJob] = useState(null)
@@ -63,7 +81,7 @@ export default function JobDetailPage() {
 
     if (error || !data) {
       console.error("Greška pri downloadu:", error)
-      alert("Greška pri preuzimanju CV-a.")
+      showError("Greška pri preuzimanju CV-a.")
       return
     }
 
@@ -77,75 +95,421 @@ export default function JobDetailPage() {
 
   if (loading) {
     return (
-      <Box sx={{ p: 4, color: "#fff", minHeight: "100vh", bgcolor: "#121212" }}>
-        <CircularProgress sx={{ color: "#ff1a1a" }} />
+      <Box
+        sx={{
+          minHeight: "100vh",
+          background: "radial-gradient(ellipse at center, #1a0000 0%, #0f0f0f 70%)",
+          color: "#f5f5f1",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "linear-gradient(45deg, rgba(220, 38, 38, 0.05) 0%, transparent 50%, rgba(220, 38, 38, 0.02) 100%)",
+            pointerEvents: "none",
+          },
+        }}
+      >
+        <Fade in={loading} timeout={500}>
+          <Box sx={{ textAlign: "center", position: "relative", zIndex: 1 }}>
+            <CircularProgress 
+              size={60} 
+              sx={{ 
+                color: "#e50914",
+                mb: 2,
+                "& .MuiCircularProgress-circle": {
+                  strokeLinecap: "round",
+                }
+              }} 
+            />
+            <Typography variant="h6" sx={{ color: "#f5f5f1" }}>
+              Učitavam podatke...
+            </Typography>
+          </Box>
+        </Fade>
       </Box>
     )
   }
 
   if (!job) {
     return (
-      <Box sx={{ p: 4, color: "#fff", minHeight: "100vh", bgcolor: "#121212" }}>
-        <Typography variant="h5" sx={{ color: "#ff1a1a" }}>
-          ❌ Konkurs nije pronađen.
+      <Box
+        sx={{
+          minHeight: "100vh",
+          background: "radial-gradient(ellipse at center, #1a0000 0%, #0f0f0f 70%)",
+          color: "#f5f5f1",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "linear-gradient(45deg, rgba(220, 38, 38, 0.05) 0%, transparent 50%, rgba(220, 38, 38, 0.02) 100%)",
+            pointerEvents: "none",
+          },
+        }}
+      >
+        <Box sx={{ textAlign: "center", position: "relative", zIndex: 1 }}>
+          <Cancel sx={{ fontSize: "4rem", color: "#e50914", mb: 2 }} />
+          <Typography variant="h4" sx={{ color: "#f5f5f1", mb: 1 }}>
+            Oglas nije pronađen
+          </Typography>
+          <Typography variant="body1" sx={{ color: "#aaaaaa" }}>
+            Molimo proverite da li je URL ispravan
         </Typography>
+        </Box>
       </Box>
     )
   }
 
   return (
-    <Box sx={{ bgcolor: "#121212", minHeight: "100vh", color: "#fff" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "radial-gradient(ellipse at center, #1a0000 0%, #0f0f0f 70%)",
+        color: "#f5f5f1",
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "linear-gradient(45deg, rgba(220, 38, 38, 0.05) 0%, transparent 50%, rgba(220, 38, 38, 0.02) 100%)",
+          pointerEvents: "none",
+        },
+      }}
+    >
       <Navbar user={user} loading={userLoading} />
 
-      <Box sx={{ p: 4, maxWidth: 1000, mx: "auto" }}>
-        <Typography variant="h4" sx={{ color: "#ff1a1a", fontWeight: "bold", mb: 3 }}>
-          📄 Detalji konkursa
-        </Typography>
-
-        <Paper
-          elevation={3}
+      <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: "auto", position: "relative", zIndex: 1 }}>
+        <Zoom in={true} timeout={800}>
+          <Typography 
+            variant="h3" 
           sx={{
-            p: 3,
-            borderRadius: 3,
-            bgcolor: "#1e1e1e",
-            border: "1px solid #ff1a1a",
-            mb: 5,
-          }}
-        >
-          <Typography variant="h6" sx={{ color: "#ff4d4d", mb: 2 }}>
-            {job.title}
-          </Typography>
-          <GridField label="Kompanija" value={job.company} />
-          <GridField label="Datum isteka" value={job.date} />
-          <GridField label="Grad" value={job.city} />
-          <GridField label="Zadatak" value={job.task} />
-          <GridField label="Opis" value={job.description} />
-          <GridField label="O nama" value={job.info} />
-          <GridField label="Kontakt Email" value={job.email} />
-          <GridField label="Kontakt Telefon" value={job.telephone} />
-          <GridField
-            label="Potrebno"
-            value={`CV: ${job.cv ? "Da" : "Ne"}, Iskustvo: ${job.experience ? "Da" : "Ne"}`}
-          />
-        </Paper>
-
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-          <select
-            onChange={(el) => setSortBy(el.target.value)}
-            style={{
-              padding: "8px",
-              backgroundColor: "#1e1e1e",
-              color: "#fff",
-              border: "1px solid #ff1a1a",
-              borderRadius: "4px",
+              color: "#f5f5f1", 
+              fontWeight: 700, 
+              mb: 4,
+              textAlign: "center",
+              background: "linear-gradient(45deg, #e50914, #ff6b6b)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
             }}
           >
-            <option value="latest">🕒 Najnovije</option>
-            <option value="oldest">🕒 Najstarije</option>
-            <option value="score_desc">🔼 Ocjena: Najviša</option>
-            <option value="score_asc">🔽 Ocjena: Najniža</option>
-          </select>
+            📄 Detalji konkursa
+          </Typography>
+        </Zoom>
+
+        <Zoom in={true} timeout={1000}>
+          <Card
+            elevation={24}
+            sx={{
+              mb: 4,
+              background: "rgba(30, 30, 30, 0.95)",
+              backdropFilter: "blur(20px)",
+              borderRadius: 4,
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              overflow: "hidden",
+            }}
+          >
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3, mb: 3 }}>
+                <Avatar
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    background: "linear-gradient(135deg, #e50914, #ff6b6b)",
+                    fontSize: "2rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {job.company?.charAt(0)?.toUpperCase() || "J"}
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography 
+                    variant="h3" 
+                    sx={{ 
+                      color: "#f5f5f1", 
+                      fontWeight: 700,
+                      mb: 1,
+                      background: "linear-gradient(45deg, #e50914, #ff6b6b)",
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    {job.title}
+                  </Typography>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      color: "#aaaaaa", 
+                      mb: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <Work sx={{ fontSize: "1.5rem" }} />
+                    {job.company}
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+                    <Chip 
+                      icon={<LocationOn />}
+                      label={job.city} 
+                      sx={{ 
+                        background: "linear-gradient(135deg, #e50914, #ff6b6b)",
+                        color: "#fff",
+                        fontWeight: 600,
+                      }} 
+                    />
+                    <Chip 
+                      icon={<CalendarToday />}
+                      label={job.date} 
+                      sx={{ 
+                        background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+                        color: "#fff",
+                        fontWeight: 600,
+                      }} 
+                    />
+                  </Box>
+                </Box>
+              </Box>
+              
+              <Divider sx={{ my: 3, borderColor: "rgba(255, 255, 255, 0.1)" }} />
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      color: "#f5f5f1", 
+                      mb: 2,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Opis posla
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      color: "#cccccc", 
+                      lineHeight: 1.8,
+                      mb: 3,
+                    }}
+                  >
+                    {job.description}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      color: "#f5f5f1", 
+                      mb: 2,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Zadatak
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      color: "#cccccc", 
+                      lineHeight: 1.8,
+                      mb: 3,
+                    }}
+                  >
+                    {job.task}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      color: "#f5f5f1", 
+                      mb: 2,
+                      fontWeight: 600,
+                    }}
+                  >
+                    O nama
+                  </Typography>
+                  <Box sx={{ 
+                    background: "rgba(0, 0, 0, 0.3)",
+                    borderRadius: 2,
+                    p: 3,
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                  }}>
+                    <MarkdownViewer content={job.info} />
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      color: "#f5f5f1", 
+                      mb: 2,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Kontakt informacije
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: "#cccccc",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                      }}
+                    >
+                      <Email sx={{ fontSize: "1rem", color: "#e50914" }} />
+                      {job.email}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: "#cccccc",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                      }}
+                    >
+                      <Phone sx={{ fontSize: "1rem", color: "#e50914" }} />
+                      {job.telephone}
+                    </Typography>
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      color: "#f5f5f1", 
+                      mb: 2,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Potrebno
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    <Chip 
+                      icon={job.cv ? <CheckCircle /> : <Cancel />}
+                      label={`CV: ${job.cv ? "Da" : "Ne"}`}
+                      sx={{ 
+                        background: job.cv 
+                          ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                          : "linear-gradient(135deg, #ef4444, #dc2626)",
+                        color: "#fff",
+                        fontWeight: 600,
+                      }} 
+                    />
+                    <Chip 
+                      icon={job.experience ? <CheckCircle /> : <Cancel />}
+                      label={`Iskustvo: ${job.experience ? "Da" : "Ne"}`}
+                      sx={{ 
+                        background: job.experience 
+                          ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                          : "linear-gradient(135deg, #ef4444, #dc2626)",
+                        color: "#fff",
+                        fontWeight: 600,
+                      }} 
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Zoom>
+
+        <Zoom in={true} timeout={1200}>
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            mb: 4,
+            flexWrap: "wrap",
+            gap: 2,
+          }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Badge 
+                badgeContent={applications.length} 
+                color="error"
+                sx={{
+                  "& .MuiBadge-badge": {
+                    background: "linear-gradient(135deg, #e50914, #ff6b6b)",
+                    fontWeight: "bold",
+                  }
+                }}
+              >
+                <Assessment sx={{ fontSize: "2rem", color: "#e50914" }} />
+              </Badge>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  color: "#f5f5f1",
+                  fontWeight: 700,
+                }}
+              >
+                Prijave
+              </Typography>
         </Box>
+            
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant={sortBy === "latest" ? "contained" : "outlined"}
+                onClick={() => setSortBy("latest")}
+                startIcon={<TrendingUp />}
+                sx={{
+                  background: sortBy === "latest" 
+                    ? "linear-gradient(135deg, #e50914, #ff6b6b)" 
+                    : "transparent",
+                  borderColor: "#e50914",
+                  color: "#fff",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #e50914, #ff6b6b)",
+                  }
+                }}
+              >
+                Najnovije
+              </Button>
+              <Button
+                variant={sortBy === "oldest" ? "contained" : "outlined"}
+                onClick={() => setSortBy("oldest")}
+                startIcon={<Schedule />}
+                sx={{
+                  background: sortBy === "oldest" 
+                    ? "linear-gradient(135deg, #e50914, #ff6b6b)" 
+                    : "transparent",
+                  borderColor: "#e50914",
+                  color: "#fff",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #e50914, #ff6b6b)",
+                  }
+                }}
+              >
+                Najstarije
+              </Button>
+            </Box>
+          </Box>
+        </Zoom>
 
         <Typography variant="h5" sx={{ mb: 2, color: "#ff1a1a" }}>
           📝 Prijave kandidata

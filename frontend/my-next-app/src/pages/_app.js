@@ -1,4 +1,5 @@
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { NotificationProvider } from "@/components/NotificationProvider";
 
 const netflixTheme = createTheme({
   palette: {
@@ -24,7 +25,9 @@ export default function App({ Component, pageProps }) {
   return (
     <ThemeProvider theme={netflixTheme}>
       <CssBaseline />
-      <Component {...pageProps} />
+      <NotificationProvider>
+        <Component {...pageProps} />
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

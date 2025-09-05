@@ -3,9 +3,11 @@ import { Box, TextField, Button, Typography, Paper, Link as MuiLink } from "@mui
 import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/router"
+import { useNotification } from "@/components/NotificationProvider"
 
 export default function Login() {
   const router = useRouter()
+  const { showError } = useNotification()
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -19,7 +21,7 @@ export default function Login() {
     })
 
     if (error) {
-      alert("Greška: " + error.message)
+      showError("Greška: " + error.message)
       return
     }
 

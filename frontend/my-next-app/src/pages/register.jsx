@@ -4,9 +4,11 @@ import { FormControl, Select, MenuItem } from "@mui/material"
 import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/router"
+import { useNotification } from "@/components/NotificationProvider"
 
 export default function Register() {
   const router = useRouter()
+  const { showSuccess, showError } = useNotification()
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -18,7 +20,7 @@ export default function Register() {
     const role = form.role.value
 
     if (password !== confirmPassword) {
-      alert("Lozinke se ne podudaraju.")
+      showError("Lozinke se ne podudaraju.")
       return
     }
 
@@ -29,7 +31,7 @@ export default function Register() {
     })
 
     if (error) {
-      alert("Greška " + error.message)
+      showError("Greška " + error.message)
       return
     }
 
@@ -46,11 +48,11 @@ export default function Register() {
       const { error: insertError } = await supabase.from("users").insert([userData])
 
       if (insertError) {
-        alert("Greška prilikom unosa u bazu: " + insertError.message)
+        showError("Greška prilikom unosa u bazu: " + insertError.message)
         return
       }
 
-      alert("Uspješna registracija! Provjerite email i nakon potvrde se ulogujte.")
+      showSuccess("Uspješna registracija! Provjerite email i nakon potvrde se ulogujte.")
       router.push("/login")
     }
   }

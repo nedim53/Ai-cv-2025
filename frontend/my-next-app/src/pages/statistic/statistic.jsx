@@ -39,17 +39,14 @@ import Navbar from "@/components/navbar"
 import Link from "next/link"
 import useUser from "@/lib/useUser"
 import MarkdownViewer from "@/components/MarkdownViewer"
+import { useNotification } from "@/components/NotificationProvider"
 
 export default function Statistic() {
   const { user, loading: userLoading } = useUser()
+  const { showSuccess, showError } = useNotification()
   const [realUserId, setRealUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [jobStats, setJobStats] = useState([])
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  })
   const [sortBy, setSortBy] = useState("latest")
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editJob, setEditJob] = useState({
@@ -102,9 +99,9 @@ export default function Statistic() {
 
     if (error) {
       console.error("UPDATE ERROR:", error)
-      setSnackbar({ open: true, message: `Greška pri uređivanju: ${error.message}`, severity: "error" })
+      showError(`Greška pri uređivanju: ${error.message}`)
     } else {
-      setSnackbar({ open: true, message: "Uspješno uređeno!", severity: "success" })
+      showSuccess("Uspješno uređeno!")
       setEditDialogOpen(false)
       // Refresh data instead of full page reload
       window.location.reload()
@@ -124,9 +121,9 @@ export default function Statistic() {
 
     if (error) {
       console.error("DELETE ERROR:", error)
-      setSnackbar({ open: true, message: `Greška pri brisanju: ${error.message}`, severity: "error" })
+      showError(`Greška pri brisanju: ${error.message}`)
     } else {
-      setSnackbar({ open: true, message: "Oglas obrisan.", severity: "success" })
+      showSuccess("Oglas obrisan.")
       window.location.reload()
     }
   }

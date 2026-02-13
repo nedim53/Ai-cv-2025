@@ -57,12 +57,14 @@ export default function useUser() {
   useEffect(() => {
     fetchUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      fetchUser(); 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        fetchUser();
+      }
     });
 
     return () => {
-      listener?.subscription?.unsubscribe(); 
+      subscription?.unsubscribe(); 
     };
   }, []);
 

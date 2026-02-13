@@ -230,9 +230,9 @@ export default function HomePage() {
 
                   <Grid container spacing={3} sx={{ maxWidth: "1200px", mx: "auto" }}>
                     {recommendedJobs.map((job) => (
-                      <Grid item xs={12} sm={6} md={4} key={job.id}>
-                        <Card className="glass-card glow-cyan" sx={{ borderRadius: 3, height: "100%" }}>
-                          <CardContent sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column" }}>
+                      <Grid item xs={12} sm={6} md={4} key={job.id} sx={{ display: "flex" }}>
+                        <Card className="glass-card glow-cyan" sx={{ borderRadius: 3, flex: 1, width: "100%", minHeight: "400px", height: "100%", display: "flex", flexDirection: "column" }}>
+                          <CardContent sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", flexGrow: 1 }}>
                             <Typography
                               variant="h6"
                               sx={{
@@ -240,6 +240,9 @@ export default function HomePage() {
                                 fontWeight: 600,
                                 mb: 2,
                                 fontSize: "1.2rem",
+                                minHeight: "60px",
+                                display: "flex",
+                                alignItems: "center",
                               }}
                             >
                               {job.title}
@@ -250,8 +253,26 @@ export default function HomePage() {
                             <Typography variant="body2" sx={{ mb: 1, color: "#ddd" }}>
                               <strong>Grad:</strong> {job.city}
                             </Typography>
-                            <Typography variant="body2" sx={{ mb: 3, color: "#ddd" }}>
+                            <Typography variant="body2" sx={{ mb: 2, color: "#ddd" }}>
                               <strong>Ističe:</strong> {new Date(job.date).toLocaleDateString()}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "#bbbbbb",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "normal",
+                                minHeight: "72px",
+                                maxHeight: "72px",
+                                lineHeight: 1.4,
+                                mb: 2,
+                              }}
+                            >
+                              {job.description}
                             </Typography>
                             <Box sx={{ mt: "auto" }}>
                               <Link href={`/jobdescription/${job.id}`} passHref>
@@ -409,6 +430,9 @@ export default function HomePage() {
                       className="glass-card glow-red"
                       sx={{
                         flex: 1,
+                        width: "100%",
+                        minHeight: "400px",
+                        height: "100%",
                         borderRadius: "16px",
                         display: "flex",
                         flexDirection: "column",
@@ -460,9 +484,10 @@ export default function HomePage() {
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "normal",
-                              minHeight: "60px",
-                              maxHeight: "60px",
+                              minHeight: "72px",
+                              maxHeight: "72px",
                               lineHeight: 1.4,
+                              mb: 2,
                             }}
                           >
                             {job.description}

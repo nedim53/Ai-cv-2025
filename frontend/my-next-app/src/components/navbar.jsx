@@ -20,7 +20,8 @@ import {
   Logout,
   Login,
   PersonAdd,
-  TrendingUp
+  TrendingUp,
+  Menu as MenuIcon
 } from "@mui/icons-material"
 import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
@@ -28,7 +29,9 @@ import useUser from "@/lib/useUser"
 
 export default function Navbar({ user, loading }) {
   const [anchorEl, setAnchorEl] = useState(null)
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null)
   const open = Boolean(anchorEl)
+  const mobileMenuOpen = Boolean(mobileMenuAnchor)
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget)
@@ -36,6 +39,14 @@ export default function Navbar({ user, loading }) {
 
   const handleClose = () => {
     setAnchorEl(null)
+  }
+
+  const handleMobileMenu = (event) => {
+    setMobileMenuAnchor(event.currentTarget)
+  }
+
+  const handleMobileMenuClose = () => {
+    setMobileMenuAnchor(null)
   }
 
   const handleLogout = async () => {
@@ -83,7 +94,7 @@ export default function Navbar({ user, loading }) {
         </Typography>
         </Link>
 
-        {/* Navigation Links */}
+        {/* Navigation Links - Desktop */}
         <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 2 }}>
           <Link href="/" style={{ textDecoration: "none" }}>
             <Button 
@@ -112,17 +123,30 @@ export default function Navbar({ user, loading }) {
                   </Button>
                 </Link>
               ) : (
-                <Link href="/findMyJob" style={{ textDecoration: "none" }}>
-                  <Button 
-                    sx={{ 
-                      color: "#fff", 
-                      fontWeight: 500,
-                      "&:hover": { color: "#e50914" }
-                    }}
-                  >
-                    Nađi posao
-                  </Button>
-                </Link>
+                <>
+                  <Link href="/findMyJob" style={{ textDecoration: "none" }}>
+                    <Button 
+                      sx={{ 
+                        color: "#fff", 
+                        fontWeight: 500,
+                        "&:hover": { color: "#e50914" }
+                      }}
+                    >
+                      Nađi posao
+                    </Button>
+                  </Link>
+                  <Link href="/profil" style={{ textDecoration: "none" }}>
+                    <Button 
+                      sx={{ 
+                        color: "#fff", 
+                        fontWeight: 500,
+                        "&:hover": { color: "#e50914" }
+                      }}
+                    >
+                      Profil
+                    </Button>
+                  </Link>
+                </>
               )}
               
               <Link href="/statistic/statistic" style={{ textDecoration: "none" }}>
@@ -139,6 +163,73 @@ export default function Navbar({ user, loading }) {
             </>
           )}
         </Box>
+
+        {/* Mobile Menu Button */}
+        {user && (
+          <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", gap: 1 }}>
+            <IconButton
+              size="large"
+              aria-label="show more"
+              aria-controls="mobile-menu"
+              aria-haspopup="true"
+              onClick={handleMobileMenu}
+              color="inherit"
+              sx={{ 
+                color: "#fff",
+                "&:hover": { 
+                  bgcolor: "rgba(229, 9, 20, 0.1)" 
+                }
+              }}
+            >
+              <MenuIcon />
+            </IconButton>
+            
+            <Menu
+              id="mobile-menu"
+              anchorEl={mobileMenuAnchor}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={mobileMenuOpen}
+              onClose={handleMobileMenuClose}
+              sx={{
+                "& .MuiPaper-root": {
+                  bgcolor: "#1a1a1a",
+                  border: "1px solid #333",
+                  borderRadius: 2,
+                  mt: 1
+                }
+              }}
+            >
+              <MenuItem onClick={handleMobileMenuClose} sx={{ color: "#fff", "&:hover": { bgcolor: "rgba(229, 9, 20, 0.1)" } }}>
+                <Link href="/" style={{ textDecoration: "none", color: "inherit", width: "100%" }}>Početna</Link>
+              </MenuItem>
+              {user.role === "hr" ? (
+                <MenuItem onClick={handleMobileMenuClose} sx={{ color: "#fff", "&:hover": { bgcolor: "rgba(229, 9, 20, 0.1)" } }}>
+                  <Link href="/dashboard" style={{ textDecoration: "none", color: "inherit", width: "100%" }}>Dashboard</Link>
+                </MenuItem>
+              ) : (
+                <>
+                  <MenuItem onClick={handleMobileMenuClose} sx={{ color: "#fff", "&:hover": { bgcolor: "rgba(229, 9, 20, 0.1)" } }}>
+                    <Link href="/findMyJob" style={{ textDecoration: "none", color: "inherit", width: "100%" }}>Nađi posao</Link>
+                  </MenuItem>
+                  <MenuItem onClick={handleMobileMenuClose} sx={{ color: "#fff", "&:hover": { bgcolor: "rgba(229, 9, 20, 0.1)" } }}>
+                    <Link href="/profil" style={{ textDecoration: "none", color: "inherit", width: "100%" }}>Profil</Link>
+                  </MenuItem>
+                </>
+              )}
+              <MenuItem onClick={handleMobileMenuClose} sx={{ color: "#fff", "&:hover": { bgcolor: "rgba(229, 9, 20, 0.1)" } }}>
+                <Link href="/statistic/statistic" style={{ textDecoration: "none", color: "inherit", width: "100%" }}>Statistike</Link>
+              </MenuItem>
+            </Menu>
+          </Box>
+        )}
 
         {/* User Menu / Auth Buttons */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

@@ -5,10 +5,13 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/router"
 import { useNotification } from "@/components/NotificationProvider"
+import Navbar from "@/components/navbar"
+import useUser from "@/lib/useUser"
 
 export default function Register() {
   const router = useRouter()
   const { showSuccess, showError } = useNotification()
+  const { user, loading } = useUser()
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -63,8 +66,7 @@ export default function Register() {
         minHeight: "100vh",
         background: "radial-gradient(ellipse at center, #1a0000 0%, #0f0f0f 70%)",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: "column",
         px: 2,
         overflowX: "hidden",
         position: "relative",
@@ -81,6 +83,17 @@ export default function Register() {
         },
       }}
     >
+      <Navbar user={user} loading={loading} />
+      
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          py: 4,
+        }}
+      >
       <Paper
         elevation={24}
         sx={{
@@ -263,6 +276,7 @@ export default function Register() {
           </Link>
         </Typography>
       </Paper>
+      </Box>
     </Box>
   )
 }

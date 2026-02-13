@@ -4,10 +4,13 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/router"
 import { useNotification } from "@/components/NotificationProvider"
+import Navbar from "@/components/navbar"
+import useUser from "@/lib/useUser"
 
 export default function Login() {
   const router = useRouter()
-  const { showError } = useNotification()
+  const { showError, showSuccess } = useNotification()
+  const { user, loading } = useUser()
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -25,7 +28,11 @@ export default function Login() {
       return
     }
 
-    router.push("/")
+    showSuccess("Uspješno ste se prijavili!")
+    // Sačekaj malo da se session učita, pa onda redirect
+    setTimeout(() => {
+      window.location.href = "/"
+    }, 500)
   }
 
   return (
@@ -34,8 +41,7 @@ export default function Login() {
         minHeight: "100vh",
         background: "radial-gradient(ellipse at center, #1a0000 0%, #0f0f0f 70%)",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: "column",
         px: 2,
         overflowX: "hidden",
         position: "relative",
@@ -52,6 +58,17 @@ export default function Login() {
         },
       }}
     >
+      <Navbar user={user} loading={loading} />
+      
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          py: 4,
+        }}
+      >
       <Paper
         elevation={24}
         sx={{
@@ -221,6 +238,7 @@ export default function Login() {
           </Link>
         </Typography>
       </Paper>
+      </Box>
     </Box>
   )
 }
